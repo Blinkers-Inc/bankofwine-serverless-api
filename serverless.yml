@@ -25,7 +25,7 @@ provider:
   profile: blinkers
   runtime: nodejs16.x
   region: ap-northeast-2
-  stage: ${opt:stage, "development"}
+  stage: ${opt:stage, "dev"}
   environment:
     STAGE: ${self:provider.stage}
   timeout: 30
@@ -43,12 +43,16 @@ useDotenv: true
 custom:
   STAGE: ${self:provider.stage} # 현재 스테이지 별로 데이터베이스 접속 정보를 달리하기 위함
   webpack:
-    # webpackConfig: "webpack.config.js" # Name of webpack configuration file
-    includeModules: true # Node modules configuration for packaging
+    excludeRegex: \.ts|test|\.map
+    includeModules:
+      forceExclude:
+        - aws-sdk
     packager: "npm" # Packager that will be used to package your external modules
     packagerOptions:
-      scripts: # this is the magic
+      scripts:
         - prisma generate
+        - npx rimraf "node_modules/@types"
+        - npx rimraf "node_modules/aws-sdk"
 
 package:
   individually: true

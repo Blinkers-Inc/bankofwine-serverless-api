@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "main": "handler.js",
   "scripts": {
-    "build:development": "npx sls build -s development",
-    "db:pull": "dotenv -e .env.development -- npx prisma db pull",
-    "offline:development": "npx sls offline --stage development",
-    "deploy:development": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage development",
-    "deploy:production": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage production",
-    "remove:development": "npx sls remove --stage development",
+    "build:dev": "npx sls build -s dev",
+    "db:pull": "dotenv -e .env.dev -- npx prisma db pull",
+    "offline:dev": "npx sls offline --stage dev",
+    "deploy:dev": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage dev",
+    "deploy:prod": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage prod",
+    "remove:dev": "npx sls remove --stage dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
