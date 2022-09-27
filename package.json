@@ -5,7 +5,7 @@
   "scripts": {
     "build:dev": "npx sls build -s dev",
     "db:pull": "dotenv -e .env.dev -- npx prisma db pull",
-    "offline:dev": "npx sls offline --stage dev",
+    "offline:dev": "SLS_DEBUG=* rm -rf .serverless & npx sls offline --stage dev",
     "deploy:dev": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage dev",
     "deploy:prod": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage prod",
     "remove:dev": "npx sls remove --stage dev",
@@ -49,7 +49,9 @@
   },
   "dependencies": {
     "@prisma/client": "^4.3.1",
+    "apollo-server-lambda": "^3.10.2",
     "caver-js-ext-kas": "^1.12.0",
+    "graphql": "^16.6.0",
     "prisma": "^4.3.1"
   }
 }

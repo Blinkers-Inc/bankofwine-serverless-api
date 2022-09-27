@@ -63,8 +63,8 @@ custom:
 
 package:
   individually: true
-  artifact: path/to/my-artifact.zip
   patterns:
+    - "node_modules/.prisma/client/*"
     - "!node_modules/.prisma/client/libquery_engine-*"
     - "node_modules/.prisma/client/libquery_engine-rhel-*"
     - "!node_modules/prisma/libquery_engine-*"
@@ -84,3 +84,12 @@ functions:
       - httpApi:
           path: /hello
           method: get
+
+  graphql:
+    handler: src/serverless.handler
+    name: graphql
+    events:
+      - http:
+          cors: true
+          path: /graphql
+          method: any
