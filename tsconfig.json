@@ -37,7 +37,13 @@
     "baseUrl": ".",
   },
   "exclude": [
-    "node_modules"
+    "node_modules/**/*",
+    ".serverless/**/*",
+    ".webpack/**/*",
+    "_warmup/**/*",
+    ".vscode/**/*",
+    "*.config.js",
+    "**/*.js"
   ],
   "include": [
     "./src/**/*.tsx",
