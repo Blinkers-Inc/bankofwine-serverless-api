@@ -64,6 +64,7 @@ custom:
 package:
   individually: true
   patterns:
+    - "./src/prisma/*"
     - "node_modules/.prisma/client/*"
     - "!node_modules/.prisma/client/libquery_engine-*"
     - "node_modules/.prisma/client/libquery_engine-rhel-*"
@@ -71,20 +72,6 @@ package:
     - "!node_modules/@prisma/engines/**"
 
 functions:
-  receiveTransaction:
-    handler: src/functions/post/receiveTransaction.handler
-    events:
-      - httpApi:
-          path: /receiveTransaction
-          method: post
-
-  hello:
-    handler: src/functions/hello.handler
-    events:
-      - httpApi:
-          path: /hello
-          method: get
-
   graphql:
     handler: src/serverless.handler
     name: graphql

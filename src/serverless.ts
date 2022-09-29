@@ -1,44 +1,31 @@
+import "reflect-metadata";
 import { PrismaClient } from "@prisma/client";
-import { ApolloServer, gql } from "apollo-server-lambda";
+import { ApolloServer } from "apollo-server-lambda";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import CaverExtKas from "caver-js-ext-kas";
-// import typeDefs from "./src/graphql/schema";
-// import resolvers from "./src/graphql/resolvers";
 
-// Construct a schema, using GraphQL schema language
-const typeDefs = gql`
-  type Query {
-    hello: String
-    banners: String
-  }
-`;
+import { schema } from "src/resolvers";
+import { IContext } from "src/common/interfaces/context";
 
-// Provide resolver functions for your schema fields
-const resolvers = {
-  Query: {
-    hello: () => "Hello world!",
-    banners: async (parent: any, args: any, context: any) => {
-      const client = await context.prismaClient();
-      const allBanners = await client.banner.findMany();
-      console.log("allBanners", allBanners);
-
-      return JSON.stringify(allBanners);
-    },
-  },
-};
-
-const connectPrismaClient = async () => {
-  const prisma = new PrismaClient();
-  await prisma.$connect();
-
-  return prisma;
-};
+const { KAS_ACCESS_KEY, KAS_SECRET_ACCESS_KEY, KAS_CHAIN_ID } = process.env;
 
 const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: {
-    prismaClient: connectPrismaClient,
+  schema,
+  context: async ({
+    event: {
+      headers: { Authorization },
+    },
+  }): Promise<IContext> => {
+    const prismaClient = new PrismaClient();
+    await prismaClient.$connect();
+
+    const caver = new CaverExtKas(
+      KAS_CHAIN_ID,
+      KAS_ACCESS_KEY,
+      KAS_SECRET_ACCESS_KEY
+    );
+
+    return { Authorization, caver, prismaClient };
   },
   // By default, the GraphQL Playground interface and GraphQL introspection
   // is disabled in "production" (i.e. when `process.env.NODE_ENV` is `production`).

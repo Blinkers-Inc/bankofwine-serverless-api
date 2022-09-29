@@ -3,6 +3,12 @@ generator client {
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
+generator typegraphql {
+  provider           = "typegraphql-prisma"
+  emitTranspiledCode = "true"
+  output             = "../src/prisma"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -306,6 +312,7 @@ model my_mnft {
   type                  String?       @db.VarChar(255)
   member_uid            String        @db.VarChar(255)
   mynft_uuid            String        @db.Uuid
+  contract_address      String?       @db.VarChar(255)
   member                member        @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fk60912awbp51w1vc32q4uolq16")
   my_nft_con            my_nft_con    @relation(fields: [mynft_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fka8i6tjwv4o5gtt1m56xas1sac")
   mnft_tx               mnft_tx?
@@ -325,6 +332,7 @@ model my_nft_con {
   nft_con_edition_uuid String?          @db.Uuid
   is_burnt             Boolean?
   token_id             String?          @db.VarChar(255)
+  contract_address     String?          @db.VarChar(255)
   nft_con_edition      nft_con_edition? @relation(fields: [nft_con_edition_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fk2xv3pqyhuy3tfumwd4m7cgsm3")
   member               member           @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkpe58693g6nuyw0s3qa124s7m")
   my_mnft              my_mnft[]

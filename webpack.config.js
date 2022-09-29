@@ -8,6 +8,9 @@ module.exports = {
   entry: slsw.lib.entries,
   mode: slsw.lib.webpack.isLocal ? "development" : "production",
   stats: "minimal",
+  experiments: {
+    topLevelAwait: true
+  },
   output: {
     libraryTarget: 'commonjs',
     path: path.resolve(__dirname, '.webpack'),
