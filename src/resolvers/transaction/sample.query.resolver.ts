@@ -1,6 +1,6 @@
-import { Authorized, ObjectType, Query } from "type-graphql";
+import { Authorized, Query, Resolver } from "type-graphql";
 
-@ObjectType()
+@Resolver()
 export class SampleResolver {
   @Authorized()
   @Query(() => String, { nullable: true })

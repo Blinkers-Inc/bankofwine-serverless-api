@@ -1,3 +1,4 @@
+import { ApolloError } from "apollo-server-errors";
 import { registerEnumType } from "type-graphql";
 
 export enum CustomErrorCode {
@@ -21,15 +22,16 @@ registerEnumType(CustomErrorCode, {
   name: "CustomErrorCode",
 });
 
-export class CustomError extends Error {
+export class CustomError extends ApolloError {
   private static readonly ERROR_NAME = "BOW_SERVER_ERROR";
   public errorCode: string = CustomError.ERROR_NAME;
 
   constructor(message: string, errorCode?: string) {
-    super(message);
+    super(message, CustomError.ERROR_NAME);
     Error.captureStackTrace(this, CustomError);
-    CustomError;
-    this.name = CustomError.ERROR_NAME;
+
+    Object.defineProperty(this, "name", { value: CustomError.ERROR_NAME });
+
     if (errorCode) {
       this.errorCode = errorCode;
     }

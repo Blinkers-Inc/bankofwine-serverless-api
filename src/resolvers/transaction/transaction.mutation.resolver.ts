@@ -1,14 +1,13 @@
-import { sleep } from "src/helpers/sleep";
+import { Ctx, Arg, Mutation, Resolver } from "type-graphql";
 import { IContext } from "src/common/interfaces/context";
 import {
   ReceiveTransactionInput,
   ReceiveTransactionOutput,
   TransactionStatus,
-} from "src/resolvers/others/dto/receive-transaction.dto";
+} from "src/resolvers/transaction/dto/receive-transaction.dto";
+import { sleep } from "src/helpers/sleep";
 
-import { Ctx, Arg, Mutation, ObjectType } from "type-graphql";
-
-@ObjectType()
+@Resolver()
 export class TransactionMutationResolver {
   @Mutation(() => ReceiveTransactionOutput)
   async receiveTransaction(
@@ -16,6 +15,8 @@ export class TransactionMutationResolver {
     @Ctx() { caver }: IContext
   ): Promise<ReceiveTransactionOutput> {
     let transactionHash = "";
+
+    // const decoded = caver.transaction.decode(rlp); // 추후 검증시 필요
 
     try {
       ({ transactionHash } =
