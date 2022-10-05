@@ -1,3 +1,6 @@
+/* eslint-disable simple-import-sort/imports */
+import "reflect-metadata";
+
 import { PrismaClient } from "@prisma/client";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ApolloServer } from "apollo-server-lambda";
@@ -5,8 +8,6 @@ import CaverExtKas from "caver-js-ext-kas";
 
 import { IContext } from "src/common/interfaces/context";
 import { schema } from "src/resolvers";
-
-import "reflect-metadata";
 
 const { KAS_ACCESS_KEY, KAS_CHAIN_ID, KAS_SECRET_ACCESS_KEY } = process.env;
 

@@ -2,7 +2,6 @@ import {
   Field,
   Float,
   InputType,
-  Int,
   ObjectType,
   registerEnumType,
 } from "type-graphql";
@@ -12,6 +11,7 @@ export enum MetadataDisplayType {
   RANKING = "ranking",
   NUMBER = "number",
   NONE = "none",
+  BOOST_PERCENTAGE = "boost_percentage",
 }
 
 registerEnumType(MetadataDisplayType, {
@@ -26,8 +26,8 @@ export class MetadataAttributeInput {
   @Field()
   trait_type: string;
 
-  @Field(() => MetadataDisplayType)
-  display_type: MetadataDisplayType;
+  @Field(() => MetadataDisplayType, { defaultValue: MetadataDisplayType.NONE })
+  display_type?: MetadataDisplayType;
 
   @Field({ nullable: true })
   string_value?: string;
@@ -39,10 +39,10 @@ export class MetadataAttributeInput {
   max_value?: number;
 }
 
-@InputType("CreateMyNftConMetadataInput")
-export class CreateMyNftConMetadataInput {
+@InputType("CreateNftConMetadataInput")
+export class CreateNftConMetadataInput {
   @Field()
-  my_nft_con_uuid: string;
+  nft_con_uuid: string;
 
   @Field()
   name: string;
@@ -50,20 +50,8 @@ export class CreateMyNftConMetadataInput {
   @Field()
   description: string;
 
-  @Field()
-  image: string;
-
-  @Field()
-  animation_url: string;
-
-  @Field(() => Boolean)
-  is_mnft: boolean;
-
   @Field(() => [MetadataAttributeInput])
   attributes: MetadataAttributeInput[];
-
-  @Field(() => Int)
-  attributesLength: number;
 
   @Field({ defaultValue: "#cc3333", nullable: true })
   background_color?: string;

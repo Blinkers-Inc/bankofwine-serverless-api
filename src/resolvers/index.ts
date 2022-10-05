@@ -9,11 +9,13 @@ import { MemberQueryResolver } from "src/resolvers/databases/member/member.query
 import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
 import { MyNftConFieldResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.field.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
-import { MyNftConMetadataMutationResolver } from "src/resolvers/databases/my-nft-con-metadata/my-nft-con-metadata.mutation.resolver";
-import { MyNftConMetadataQueryResolver } from "src/resolvers/databases/my-nft-con-metadata/my-nft-con-metadata.query.resolver";
 import { NftConEditionFieldResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.field.resolver";
 import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
+import { NftConInfoFieldResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.field.resolver";
 import { NftConInfoQueryResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.query.resolver";
+import { NftConMetadataFieldResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.field.resolver";
+import { NftConMetadataMutationResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.mutation.resolver";
+import { NftConMetadataQueryResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.query.resolver";
 import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query.resolver";
 import { MigrationMutationResolver } from "src/resolvers/migration/migration.mutation.resolver";
 import { SampleResolver } from "src/resolvers/transaction/sample.query.resolver";
@@ -47,13 +49,15 @@ export const schema = buildSchemaSync({
     MemberQueryResolver,
     MigrationMutationResolver,
     MyMnftQueryResolver,
-    MyNftConMetadataMutationResolver,
-    MyNftConMetadataQueryResolver,
     MyNftConQueryResolver,
     MyNftConFieldResolver,
     NftConEditionQueryResolver,
     NftConEditionFieldResolver,
+    NftConInfoFieldResolver,
     NftConInfoQueryResolver,
+    NftConMetadataFieldResolver,
+    NftConMetadataMutationResolver,
+    NftConMetadataQueryResolver,
     SampleResolver,
     TransactionMutationResolver,
     WalletQueryResolver,

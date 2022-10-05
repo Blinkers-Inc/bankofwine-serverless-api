@@ -319,29 +319,6 @@ model my_mnft {
   participant           participant[]
 }
 
-model my_mnft_metadata_attribute {
-  uuid                  String           @id @db.Uuid
-  is_public             Boolean
-  trait_type            String           @db.VarChar(255)
-  display_type          String           @default("none") // number, ranking, date, none
-  string_value          String?
-  number_value          Float?
-  max_value             Float?
-  my_mnft_metadata      my_mnft_metadata @relation(fields: [my_mnft_metadata_uuid], references: [uuid])
-  my_mnft_metadata_uuid String           @db.Uuid
-}
-
-model my_mnft_metadata {
-  uuid          String                       @id @db.Uuid
-  my_mnft_uuid  String                       @unique() @db.Uuid
-  name          String                       @db.VarChar(255)
-  description   String
-  image         String
-  external_url  String
-  animation_url String?
-  attributes    my_mnft_metadata_attribute[]
-}
-
 model my_nft_con {
   uuid                 String           @id @db.Uuid
   created_at           DateTime         @db.Timestamp(6)
@@ -361,29 +338,6 @@ model my_nft_con {
   my_mnft              my_mnft[]
   redeem_tx            redeem_tx?
   trade_tx             trade_tx[]
-}
-
-model my_nft_con_metadata_attribute {
-  uuid                     String              @id @db.Uuid
-  is_public                Boolean
-  trait_type               String              @db.VarChar(255)
-  display_type             String              @default("none") // number, ranking, date, none
-  string_value             String?
-  number_value             Float?
-  max_value                Float?
-  my_nft_con_metadata      my_nft_con_metadata @relation(fields: [my_nft_con_metadata_uuid], references: [uuid])
-  my_nft_con_metadata_uuid String              @db.Uuid
-}
-
-model my_nft_con_metadata {
-  uuid            String                          @id @db.Uuid
-  my_nft_con_uuid String                          @unique() @db.Uuid
-  name            String                          @db.VarChar(255)
-  description     String
-  image           String
-  external_url    String
-  animation_url   String?
-  attributes      my_nft_con_metadata_attribute[]
 }
 
 model nft_con_edition {
@@ -437,6 +391,29 @@ model nft_con_info {
   gif_bg_color     String?           @db.VarChar(255)
   gif_url          String?           @db.VarChar(255)
   nft_con_edition  nft_con_edition[]
+}
+
+model nft_con_metadata_attribute {
+  uuid                  String           @id @db.Uuid
+  is_public             Boolean
+  trait_type            String           @db.VarChar(255)
+  display_type          String           @default("none") // number, ranking, date, none
+  string_value          String?
+  number_value          Float?
+  max_value             Float?
+  nft_con_metadata      nft_con_metadata @relation(fields: [nft_con_metadata_uuid], references: [uuid])
+  nft_con_metadata_uuid String           @db.Uuid
+}
+
+model nft_con_metadata {
+  uuid          String                       @id @db.Uuid
+  nft_con_uuid  String                       @unique() @db.Uuid
+  name          String                       @db.VarChar(255)
+  description   String
+  image         String
+  external_url  String
+  animation_url String?
+  attributes    nft_con_metadata_attribute[]
 }
 
 model participant {
