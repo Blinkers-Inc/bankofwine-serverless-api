@@ -1,16 +1,16 @@
-import "reflect-metadata";
 import { PrismaClient } from "@prisma/client";
-import { ApolloServer } from "apollo-server-lambda";
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
+import { ApolloServer } from "apollo-server-lambda";
 import CaverExtKas from "caver-js-ext-kas";
 
-import { schema } from "src/resolvers";
 import { IContext } from "src/common/interfaces/context";
+import { schema } from "src/resolvers";
 
-const { KAS_ACCESS_KEY, KAS_SECRET_ACCESS_KEY, KAS_CHAIN_ID } = process.env;
+import "reflect-metadata";
+
+const { KAS_ACCESS_KEY, KAS_CHAIN_ID, KAS_SECRET_ACCESS_KEY } = process.env;
 
 const server = new ApolloServer({
-  schema,
   context: async ({
     event: {
       headers: { Authorization },
@@ -34,13 +34,14 @@ const server = new ApolloServer({
   // install the Playground plugin and set the `introspection` option explicitly to `true`.
   introspection: true,
   plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
+  schema,
 });
 
 exports.handler = server.createHandler({
   expressGetMiddlewareOptions: {
     cors: {
-      origin: true,
       credentials: true,
+      origin: true,
     },
   },
 });

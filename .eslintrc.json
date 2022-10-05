@@ -10,5 +10,73 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended",
     "prettier"
+  ],
+  "plugins": [
+    "sort-keys-custom-order",
+    "simple-import-sort"
+  ],
+  "rules": {
+    // For JS objects sorting
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "sort-keys-custom-order/object-keys": [
+      "error",
+      {
+        "orderedKeys": [
+          "id",
+          "name",
+          "title"
+        ]
+      }
+    ],
+    // For TS types sorting
+    "sort-keys-custom-order/type-keys": [
+      "error",
+      {
+        "orderedKeys": [
+          "id",
+          "name",
+          "title"
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    // override "simple-import-sort" config
+    {
+      "files": [
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx"
+      ],
+      "rules": {
+        "simple-import-sort/imports": [
+          "error",
+          {
+            "groups": [
+              [
+                "^@?\\w"
+              ],
+              [
+                "^src",
+                "^@?\\w"
+              ],
+              // Parent imports. Put `..` last.
+              [
+                "^\\.\\.(?!/?$)",
+                "^\\.\\./?$"
+              ],
+              // Other relative imports. Put same-folder imports and `.` last.
+              [
+                "^\\./(?=.*/)(?!/?$)",
+                "^\\.(?!/?$)",
+                "^\\./?$"
+              ]
+            ]
+          }
+        ]
+      }
+    }
   ]
 }

@@ -1,19 +1,20 @@
-import { Ctx, Arg, Mutation, Resolver } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+
 import { IContext } from "src/common/interfaces/context";
-import {
-  ReceiveTransactionInput,
-  ReceiveTransactionOutput,
-  TransactionStatus,
-} from "src/resolvers/transaction/dto/receive-transaction.dto";
 import { sleep } from "src/helpers/sleep";
+import {
+  SendRawTransactionInput,
+  SendRawTransactionOutput,
+  TransactionStatus,
+} from "src/resolvers/transaction/dto/send-raw-transaction.dto";
 
 @Resolver()
 export class TransactionMutationResolver {
-  @Mutation(() => ReceiveTransactionOutput)
-  async receiveTransaction(
-    @Arg("input") { rlp }: ReceiveTransactionInput,
+  @Mutation(() => SendRawTransactionOutput)
+  async send_raw_transaction(
+    @Arg("input") { rlp }: SendRawTransactionInput,
     @Ctx() { caver }: IContext
-  ): Promise<ReceiveTransactionOutput> {
+  ): Promise<SendRawTransactionOutput> {
     let transactionHash = "";
 
     // const decoded = caver.transaction.decode(rlp); // 추후 검증시 필요

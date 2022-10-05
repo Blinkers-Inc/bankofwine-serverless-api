@@ -10,14 +10,14 @@ registerEnumType(TransactionStatus, {
   name: "TransactionStatus",
 });
 
-@InputType()
-export class ReceiveTransactionInput {
+@InputType("SendRawTransactionInput")
+export class SendRawTransactionInput {
   @Field()
   rlp!: string;
 }
 
-@ObjectType()
-export class ReceiveTransactionOutput {
+@ObjectType("SendRawTransactionOutput")
+export class SendRawTransactionOutput {
   @Field(() => TransactionStatus)
   status: TransactionStatus;
 

@@ -1,5 +1,5 @@
-import { Service } from "typedi";
 import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
+import { Service } from "typedi";
 
 import { IContext } from "src/common/interfaces/context";
 import { Nft_con_edition, Nft_con_info } from "src/prisma";

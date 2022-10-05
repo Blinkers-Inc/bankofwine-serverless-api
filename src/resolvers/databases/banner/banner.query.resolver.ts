@@ -1,6 +1,7 @@
+import { Ctx, Query, Resolver } from "type-graphql";
+
 import { IContext } from "src/common/interfaces/context";
 import { Banner } from "src/prisma";
-import { Ctx, Resolver, Query } from "type-graphql";
 
 @Resolver(Banner)
 export class BannerQueryResolver {

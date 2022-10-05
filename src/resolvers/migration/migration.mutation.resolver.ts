@@ -1,25 +1,24 @@
-import { Ctx, Arg, Mutation, Resolver } from "type-graphql";
-import { IContext } from "src/common/interfaces/context";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { sleep } from "src/helpers/sleep";
+import { IContext } from "src/common/interfaces/context";
+import {
+  CreateTokenMetadataURIInput,
+  CreateTokenMetadataURIOutput,
+} from "src/resolvers/migration/dto/create-token-metadata-uri.dto";
 import {
   MigrateInput,
   MigrateOutput,
 } from "src/resolvers/migration/dto/migrate.dto";
-import {
-  CreateTokenMetadataURIInput,
-  CreateTokenMetadataURIOutput,
-} from "src/resolvers/migration/dto/createTokenMetadataURI";
 
 @Resolver()
 export class MigrationMutationResolver {
   @Mutation(() => CreateTokenMetadataURIOutput)
-  async createTokenMetadataURI(
+  async create_token_metadata_uri(
     @Arg("input") input: CreateTokenMetadataURIInput,
     @Ctx() { prismaClient }: IContext
   ): Promise<CreateTokenMetadataURIOutput> {
-    const { tokenId, tokenUuid, senderAddress, isMNFT } = input;
-    await prismaClient.nft_con_metadata;
+    const { is_mnft, senderAddress, tokenId, tokenUuid } = input;
+    await prismaClient.my_mnft_metadata;
     console.log("tokenId", tokenId);
     //- 1. tokenUuid 를 통해 연결된 메타데이터를 호출.
     //- 2. myNft uuid -> *token_id*, *nft_con_edition_uuid*
@@ -83,7 +82,7 @@ export class MigrationMutationResolver {
 
   @Mutation(() => MigrateOutput)
   async migrate(@Arg("input") input: MigrateInput): Promise<MigrateOutput> {
-    //- 1. preTokenId, tokenUuid, isMNFT, senderAddress, rlp를 인풋값으로 받는다.
+    //- 1. preTokenId, tokenUuid, is_mnft, senderAddress, rlp를 인풋값으로 받는다.
     //
     //- 2. tokenId의 owner가 senderAddress와 일치한지 검증한다.
     //! error.1 owner와 senderAddress가 불일치하면 에러

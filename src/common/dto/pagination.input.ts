@@ -1,6 +1,6 @@
 import { Field, InputType, Int } from "type-graphql";
 
-@InputType()
+@InputType("PaginationInput")
 export class PaginationInput {
   @Field(() => Int, { nullable: true })
   skip?: number;

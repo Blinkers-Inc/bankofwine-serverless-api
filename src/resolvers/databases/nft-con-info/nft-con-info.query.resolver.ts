@@ -1,9 +1,10 @@
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Service } from "typedi";
+
+import { PaginationInput } from "src/common/dto/pagination.input";
+import { UuidInput } from "src/common/dto/uuid.input";
 import { IContext } from "src/common/interfaces/context";
 import { Nft_con_info } from "src/prisma";
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
-import { UuidInput } from "src/common/dto/uuid.input";
-import { PaginationInput } from "src/common/dto/pagination.input";
-import { Service } from "typedi";
 
 @Service()
 @Resolver(Nft_con_info)

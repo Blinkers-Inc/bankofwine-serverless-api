@@ -1,8 +1,8 @@
-import { Service } from "typedi";
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Service } from "typedi";
 
-import { MemberUidInput } from "src/common/dto/member-uid.input";
 import { PaginationInput } from "src/common/dto/pagination.input";
+import { MemberUidInput } from "src/common/dto/uuid.input";
 import { IContext } from "src/common/interfaces/context";
 import { Member } from "src/prisma";
 

@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "handler.js",
   "scripts": {
-    "build:dev": "npx sls build -s dev",
     "db:pull": "dotenv -e .env.dev -- npx prisma db pull",
+    "db:push:dev": "dotenv -e .env.dev -- npx prisma db push",
     "pre:install": "npx prisma generate",
-    "offline:dev": "SLS_DEBUG=* rm -rf .serverless & npx sls offline --stage dev",
+    "dev": "SLS_DEBUG=* rm -rf .serverless & npx sls offline --stage dev",
     "deploy:dev": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage dev",
     "deploy:prod": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage prod",
     "remove:dev": "npx sls remove --stage dev",
@@ -38,6 +38,8 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-promise": "^6.0.1",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
+    "eslint-plugin-sort-keys-custom-order": "^1.0.3",
     "serverless": "^3.22.0",
     "serverless-dotenv-plugin": "^4.0.2",
     "serverless-offline": "^10.0.0",
@@ -62,6 +64,7 @@
     "graphql-scalars": "^1.18.0",
     "reflect-metadata": "^0.1.13",
     "tslib": "^2.4.0",
-    "typedi": "^0.10.0"
+    "typedi": "^0.10.0",
+    "uuidv4": "^6.2.13"
   }
 }

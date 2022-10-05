@@ -1,14 +1,14 @@
-import { Service } from "typedi";
 import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
+import { Service } from "typedi";
 
 import { IContext } from "src/common/interfaces/context";
 import { Member, My_nft_con, Nft_con_edition } from "src/prisma";
-import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
+import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
 
 @Service()
 @Resolver(My_nft_con)
-export class MyNftFieldResolver {
+export class MyNftConFieldResolver {
   constructor(
     private member_query_resolver: MemberQueryResolver,
     private nft_con_edition_query_resolver: NftConEditionQueryResolver

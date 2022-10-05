@@ -1,13 +1,14 @@
-import { CreateTokenMetadataURIInput } from "src/resolvers/migration/dto/createTokenMetadataURI";
-import { Field, InputType, ObjectType, registerEnumType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
-@InputType()
+import { CreateTokenMetadataURIInput } from "src/resolvers/migration/dto/create-token-metadata-uri.dto";
+
+@InputType("MigrateInput", { isAbstract: true })
 export class MigrateInput extends CreateTokenMetadataURIInput {
   @Field()
   rlp: string;
 }
 
-@ObjectType()
+@ObjectType("MigrateOutput")
 export class MigrateOutput {
   @Field()
   transactionHash: string;

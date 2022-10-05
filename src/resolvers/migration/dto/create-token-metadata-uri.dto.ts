@@ -1,6 +1,6 @@
-import { Field, InputType, ObjectType, registerEnumType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
-@InputType()
+@InputType("CreateTokenMetadataURIInput", { isAbstract: true })
 export class CreateTokenMetadataURIInput {
   @Field()
   tokenId: string;
@@ -12,10 +12,10 @@ export class CreateTokenMetadataURIInput {
   senderAddress: string;
 
   @Field(() => Boolean)
-  isMNFT: boolean;
+  is_mnft: boolean;
 }
 
-@ObjectType()
+@ObjectType("CreateTokenMetadataURIOutput")
 export class CreateTokenMetadataURIOutput {
   @Field()
   tokenURI: string;
