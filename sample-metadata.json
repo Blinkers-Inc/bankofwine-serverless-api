@@ -1,72 +1,82 @@
 {
-  "name": "Opus One",
+  "name": "Opus One Full name",
   "description": "Opus One is famous for its essential appearance at global summit banquets. Through the Judgement of Paris, France recognized the speciality of terroir in Napa Valley and this is the first collaboration between Robert Mondavi, the father of American wine, and Philippe Rothschild, who has the best winemaking technology in France. In particular, the label features the faces and autographs of the two masters.",
   "attributes": [
     {
-      "display_type":"none",
+      "display_type": "string",
       "is_public": true,
-      "trait_type": "LWIN",
-      "string_value": "112266220170100750"
+      "trait_type": "Short Name",
+      "string_value": "Opus One"
     },
     {
-      "display_type":"none",
-      "is_public": true,
-      "trait_type": "Full Name",
-      "string_value": "Opus One Full name"
-    },
-    {
-      "display_type":"none",
+      "display_type": "string",
       "is_public": true,
       "trait_type": "Vintage",
       "string_value": "2017"
     },
     {
-      "display_type":"none",
-      "is_public": true,
-      "trait_type": "Capacity",
-      "string_value": "750ml"
+      "display_type": "string",
+      "is_public": false,
+      "trait_type": "Description_KR",
+      "string_value": "오퍼스원은 각국 정상회담 만찬에 필수적으로 나오는 와인으로 유명합니다. 파리의 심판을 통해 프랑스는 나파밸리의 떼루아의 특별함을 인정하게 되었고, 미국 와인의 아버지인 로버트 몬다비와 프랑스 와인 양조 최고 기술을 가진 필립 로칠드가 최초로 합작한 작품으로, 화합으로 만든 첫번째 작품이라는 뜻을 담고 있습니다. 특별히 레이블에는 두 거장의 얼굴과 친필 싸인이 담겨 있습니다."
     },
     {
-      "display_type":"none",
+      "display_type": "string",
       "is_public": true,
       "trait_type": "Country",
       "string_value": "USA"
     },
     {
-      "display_type":"none",
+      "display_type": "string",
       "is_public": true,
       "trait_type": "Region 1",
       "string_value": "Napa Valley"
     },
     {
-      "display_type":"none",
+      "display_type": "string",
       "is_public": true,
       "trait_type": "Region 2",
       "string_value": "Napa Valley Region 2"
     },
     {
-      "display_type":"none",
-      "is_public": true,
-      "trait_type": "Type",
-      "string_value": "Red"
-    },
-    {
-      "display_type":"none",
-      "is_public": true,
-      "trait_type": "ABV",
-      "string_value": "15%"
-    },
-    {
-      "display_type":"none",
+      "display_type": "string",
       "is_public": true,
       "trait_type": "Winery",
       "string_value": "Opus One"
     },
     {
-      "display_type":"none",
+      "display_type": "string",
       "is_public": true,
-      "trait_type": "Description_KR",
-      "string_value": "오퍼스원은 각국 정상회담 만찬에 필수적으로 나오는 와인으로 유명합니다. 파리의 심판을 통해 프랑스는 나파밸리의 떼루아의 특별함을 인정하게 되었고, 미국 와인의 아버지인 로버트 몬다비와 프랑스 와인 양조 최고 기술을 가진 필립 로칠드가 최초로 합작한 작품으로, 화합으로 만든 첫번째 작품이라는 뜻을 담고 있습니다. 특별히 레이블에는 두 거장의 얼굴과 친필 싸인이 담겨 있습니다."
+      "trait_type": "Type",
+      "string_value": "Red"
+    },
+    {
+      "display_type": "ranking",
+      "is_public": true,
+      "trait_type": "Body",
+      "number_value": 5,
+      "max_value": 5
+    },
+    {
+      "display_type": "ranking",
+      "is_public": true,
+      "trait_type": "Sweetness",
+      "number_value": 3,
+      "max_value": 5
+    },
+    {
+      "display_type": "ranking",
+      "is_public": true,
+      "trait_type": "Acidity",
+      "number_value": 1,
+      "max_value": 5
+    },
+    {
+      "display_type": "ranking",
+      "is_public": true,
+      "trait_type": "Tannin",
+      "number_value": 2.5,
+      "max_value": 5
     },
     {
       "display_type": "boost_percentage",
@@ -99,32 +109,22 @@
       "number_value": 1
     },
     {
-      "display_type": "ranking",
+      "display_type": "string",
       "is_public": true,
-      "trait_type": "Body",
-      "number_value": 5,
-      "max_value": 5
+      "trait_type": "Capacity",
+      "string_value": "750ml"
     },
     {
-      "display_type": "ranking",
+      "display_type": "string",
       "is_public": true,
-      "trait_type": "Sweetness",
-      "number_value": 3,
-      "max_value": 5
+      "trait_type": "ABV",
+      "string_value": "15%"
     },
     {
-      "display_type": "ranking",
+      "display_type": "string",
       "is_public": true,
-      "trait_type": "Acidity",
-      "number_value": 1,
-      "max_value": 5
-    },
-    {
-      "display_type": "ranking",
-      "is_public": true,
-      "trait_type": "Tannin",
-      "number_value": 2.5,
-      "max_value": 5
+      "trait_type": "LWIN",
+      "string_value": "112266220170100750"
     },
     {
       "display_type": "date",

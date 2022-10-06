@@ -17,6 +17,7 @@ import { NftConMetadataFieldResolver } from "src/resolvers/databases/nft-con-met
 import { NftConMetadataMutationResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.mutation.resolver";
 import { NftConMetadataQueryResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.query.resolver";
 import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query.resolver";
+import { MetadataMutationResolver } from "src/resolvers/metadata/metadata.mutation.resolver";
 import { MigrationMutationResolver } from "src/resolvers/migration/migration.mutation.resolver";
 import { SampleResolver } from "src/resolvers/transaction/sample.query.resolver";
 import { TransactionMutationResolver } from "src/resolvers/transaction/transaction.mutation.resolver";
@@ -47,6 +48,7 @@ export const schema = buildSchemaSync({
     BannerQueryResolver,
     MemberFieldResolver,
     MemberQueryResolver,
+    MetadataMutationResolver,
     MigrationMutationResolver,
     MyMnftQueryResolver,
     MyNftConQueryResolver,

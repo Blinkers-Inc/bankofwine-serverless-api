@@ -10,7 +10,7 @@ export enum MetadataDisplayType {
   DATE = "date",
   RANKING = "ranking",
   NUMBER = "number",
-  NONE = "none",
+  STRING = "string",
   BOOST_PERCENTAGE = "boost_percentage",
 }
 

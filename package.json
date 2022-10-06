@@ -28,7 +28,7 @@
     "@types/aws-lambda": "^8.10.104",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
-    "aws-sdk": "^2.1224.0",
+    "aws-sdk": "^2.1229.0",
     "copy-webpack-plugin": "6.3.2",
     "dotenv-cli": "^6.0.0",
     "eslint": "^8.23.0",
