@@ -7,11 +7,11 @@ import {
 } from "type-graphql";
 
 export enum MetadataDisplayType {
-  DATE = "date",
-  RANKING = "ranking",
-  NUMBER = "number",
-  STRING = "string",
   BOOST_PERCENTAGE = "boost_percentage",
+  DATE = "date",
+  NUMBER = "number",
+  RANKING = "ranking",
+  STRING = "string",
 }
 
 registerEnumType(MetadataDisplayType, {
@@ -26,7 +26,9 @@ export class MetadataAttributeInput {
   @Field()
   trait_type: string;
 
-  @Field(() => MetadataDisplayType, { defaultValue: MetadataDisplayType.NONE })
+  @Field(() => MetadataDisplayType, {
+    defaultValue: MetadataDisplayType.STRING,
+  })
   display_type?: MetadataDisplayType;
 
   @Field({ nullable: true })

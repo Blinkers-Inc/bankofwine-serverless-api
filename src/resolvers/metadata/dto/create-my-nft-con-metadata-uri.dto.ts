@@ -1,4 +1,14 @@
 import { Field, InputType, ObjectType } from "type-graphql";
+import { registerEnumType } from "type-graphql";
+
+export enum MnftType {
+  BOTTLE = "BOTTLE",
+  GLASS = "GLASS",
+}
+
+registerEnumType(MnftType, {
+  name: "MnftType",
+});
 
 @InputType("CreateMyNftConMetadataURIInput")
 export class CreateMyNftConMetadataURIInput {
@@ -6,11 +16,20 @@ export class CreateMyNftConMetadataURIInput {
   my_nft_con_uuid: string;
 
   @Field()
-  tokenId: string;
+  token_id: string;
 }
 
-@ObjectType("CreateMyNftConMetadataURIOutput")
-export class CreateMyNftConMetadataURIOutput {
+@InputType("CreateMyMnftMetadataURIInput")
+export class CreateMyMnftMetadataURIInput {
   @Field()
-  tokenURI: string;
+  my_mnft_uuid: string;
+
+  @Field()
+  token_id: string;
+}
+
+@ObjectType("CreateMetadataURIOutput")
+export class CreateMetadataURIOutput {
+  @Field()
+  token_uri: string;
 }

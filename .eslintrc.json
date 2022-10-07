@@ -12,20 +12,20 @@
     "prettier"
   ],
   "plugins": [
-    "sort-keys-custom-order",
-    "simple-import-sort"
+    "simple-import-sort",
+    "typescript-sort-keys"
   ],
   "rules": {
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
-    "sort-keys-custom-order/object-keys": [
+    "typescript-sort-keys/string-enum": "error",
+    "typescript-sort-keys/interface": [
       "error",
+      "asc",
       {
-        "orderedKeys": [
-          "id",
-          "name",
-          "title"
-        ]
+        "caseSensitive": true,
+        "natural": true,
+        "requiredFirst": true
       }
     ],
     "no-unused-vars": "off",
@@ -35,17 +35,6 @@
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
-      }
-    ],
-    // For TS types sorting
-    "sort-keys-custom-order/type-keys": [
-      "error",
-      {
-        "orderedKeys": [
-          "id",
-          "name",
-          "title"
-        ]
       }
     ]
   },

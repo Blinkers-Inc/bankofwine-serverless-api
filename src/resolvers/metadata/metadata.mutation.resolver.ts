@@ -3,7 +3,12 @@ import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
 
 import { s3 } from "src/common/aws";
+import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
+import { IMetadataAttribute } from "src/common/interfaces/metadata-attribute";
+import { Nft_con_metadata_attribute } from "src/prisma";
+import { MyMnftFieldResolver } from "src/resolvers/databases/my-mnft/my-mnft.field.resolver";
+import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
 import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
 import { NftConInfoQueryResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.query.resolver";
@@ -11,8 +16,10 @@ import { MetadataDisplayType } from "src/resolvers/databases/nft-con-metadata/dt
 import { NftConMetadataFieldResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.field.resolver";
 import { NftConMetadataQueryResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.query.resolver";
 import {
+  CreateMetadataURIOutput,
+  CreateMyMnftMetadataURIInput,
   CreateMyNftConMetadataURIInput,
-  CreateMyNftConMetadataURIOutput,
+  MnftType,
 } from "src/resolvers/metadata/dto/create-my-nft-con-metadata-uri.dto";
 
 @Service()
@@ -20,19 +27,19 @@ import {
 export class MetadataMutationResolver {
   constructor(
     private my_nft_con_query_resolver: MyNftConQueryResolver,
+    private my_mnft_query_resolver: MyMnftQueryResolver,
+    private my_mnft_field_resolver: MyMnftFieldResolver,
     private nft_con_edition_query_resolver: NftConEditionQueryResolver,
     private nft_con_info_query_resolver: NftConInfoQueryResolver,
     private nft_con_metadata_query_resolver: NftConMetadataQueryResolver,
     private nft_con_metadata_field_resolver: NftConMetadataFieldResolver
   ) {}
 
-  @Mutation(() => CreateMyNftConMetadataURIOutput)
+  @Mutation(() => CreateMetadataURIOutput)
   async create_my_nft_con_metadata_uri(
-    @Arg("input") { my_nft_con_uuid, tokenId }: CreateMyNftConMetadataURIInput,
+    @Arg("input") { my_nft_con_uuid, token_id }: CreateMyNftConMetadataURIInput,
     @Ctx() ctx: IContext
-  ): Promise<CreateMyNftConMetadataURIOutput> {
-    //- 1. my_nft_con_uuid 를 통해 연결된 메타데이터를 호출.
-
+  ): Promise<CreateMetadataURIOutput> {
     const { nft_con_edition_uuid } =
       await this.my_nft_con_query_resolver.my_nft_con(
         {
@@ -70,49 +77,195 @@ export class MetadataMutationResolver {
     const { nft_con_uuid: _, uuid: __, ...rest } = nftConMetadata;
 
     const reducedAttributes = attributes
-      .filter((ele: any) => ele.is_public === true)
-      .map((ele: any) => {
-        delete ele.uuid;
-        delete ele.nft_con_metadata_uuid;
-        delete ele.is_public;
+      .filter((ele: Nft_con_metadata_attribute) => ele.is_public === true)
+      .map((ele: Nft_con_metadata_attribute): IMetadataAttribute => {
+        let value: string | number;
 
         if (ele.display_type === MetadataDisplayType.STRING) {
-          ele.value = ele.string_value;
+          value = ele.string_value!;
         } else {
-          ele.value = ele.number_value;
+          value = ele.number_value!;
         }
 
-        if (!ele.max_value) {
-          delete ele.max_value;
-        }
-
-        delete ele.string_value;
-        delete ele.number_value;
-
-        return ele;
+        return ele.max_value
+          ? {
+              display_type: ele.display_type,
+              max_value: ele.max_value,
+              trait_type: ele.trait_type,
+              value,
+            }
+          : {
+              display_type: ele.display_type,
+              trait_type: ele.trait_type,
+              value,
+            };
       });
 
     const editionAttribute = {
       display_type: MetadataDisplayType.NUMBER,
-      display_value: "Big",
       trait_type: "Edition",
       value: Number(edition_no),
     };
 
     const completedAttributes = [editionAttribute, ...reducedAttributes];
     const metadata = { ...rest, attributes: completedAttributes };
-
     const uploadParams: PutObjectRequest = {
       ACL: "public-read",
       Body: JSON.stringify(metadata),
-      Bucket: process.env.BUCKET_NAME!,
-      Key: tokenId + ".json",
+      Bucket: process.env.NFT_METADATA_BUCKET_NAME!,
+      Key: token_id + ".json",
     };
 
-    const { Location } = await s3.upload(uploadParams).promise();
+    const { Location: token_uri } = await s3.upload(uploadParams).promise();
 
     return {
-      tokenURI: Location,
+      token_uri,
+    };
+  }
+
+  @Mutation(() => CreateMetadataURIOutput)
+  async create_my_mnft_metadata_uri(
+    @Arg("input")
+    { my_mnft_uuid, token_id }: CreateMyMnftMetadataURIInput,
+    @Ctx() ctx: IContext
+  ): Promise<CreateMetadataURIOutput> {
+    const myMnft = await this.my_mnft_query_resolver.my_mnft(
+      {
+        uuid: my_mnft_uuid,
+      },
+      ctx
+    );
+
+    const { mynft_uuid, tasted_at, type, image_url, gif_url } = myMnft;
+
+    if (!type) {
+      throw new CustomError("empty type", CustomErrorCode.EMPTY_TYPE);
+    }
+
+    console.log("mynft_uuid", mynft_uuid);
+    console.log("tasted_at", tasted_at);
+
+    const { nft_con_edition_uuid } =
+      await this.my_nft_con_query_resolver.my_nft_con(
+        {
+          uuid: mynft_uuid,
+        },
+        ctx
+      );
+
+    console.log("nft_con_edition_uuid", nft_con_edition_uuid);
+
+    const { edition_no, nft_con_uuid } =
+      await this.nft_con_edition_query_resolver.nft_con_edition(
+        {
+          uuid: nft_con_edition_uuid!,
+        },
+        ctx
+      );
+
+    console.log("nft_con_uuid", nft_con_uuid);
+
+    await this.nft_con_info_query_resolver.nft_con_info(
+      { uuid: nft_con_uuid },
+      ctx
+    );
+
+    const nftConMetadata =
+      await this.nft_con_metadata_query_resolver.nft_con_metadata(
+        {
+          nft_con_uuid,
+        },
+        ctx
+      );
+
+    const attributes = await this.nft_con_metadata_field_resolver.attributes(
+      nftConMetadata,
+      ctx
+    );
+
+    const { nft_con_uuid: _, uuid: __, ...rest } = nftConMetadata;
+
+    const reducedAttributes = attributes
+      .filter((ele: Nft_con_metadata_attribute) => ele.is_public === true)
+      .map((ele: Nft_con_metadata_attribute): IMetadataAttribute => {
+        let value: string | number;
+
+        if (ele.display_type === MetadataDisplayType.STRING) {
+          value = ele.string_value!;
+        } else {
+          value = ele.number_value!;
+        }
+
+        return ele.max_value
+          ? {
+              display_type: ele.display_type,
+              max_value: ele.max_value,
+              trait_type: ele.trait_type,
+              value,
+            }
+          : {
+              display_type: ele.display_type,
+              trait_type: ele.trait_type,
+              value,
+            };
+      });
+
+    const editionAttribute = {
+      display_type: MetadataDisplayType.NUMBER,
+      trait_type: "Edition",
+      value: Number(edition_no),
+    };
+
+    const tastingDayAttribute = {
+      display_type: MetadataDisplayType.DATE,
+      trait_type: "Tasting Day",
+      value: Math.floor(Date.parse(tasted_at!.toString()) / 1000),
+    };
+
+    console.log("tastingDayAttribute", tastingDayAttribute);
+
+    const mnftEditionAttribute = {
+      display_type: MetadataDisplayType.NUMBER,
+      trait_type: "M-NFT Edition",
+      value:
+        type === MnftType.BOTTLE
+          ? 1
+          : Number(
+              (await this.my_mnft_field_resolver.participant(myMnft, ctx))
+                .edition_no!
+            ),
+    };
+
+    console.log("mnftEditionAttribute", mnftEditionAttribute);
+
+    const completedAttributes = [
+      editionAttribute,
+      ...reducedAttributes,
+      tastingDayAttribute,
+      mnftEditionAttribute,
+    ];
+
+    const name =
+      type === MnftType.GLASS ? `Glass_${rest.name}` : `Bottle_${rest.name}`;
+
+    const metadata = {
+      ...rest,
+      name,
+      animation_url: image_url,
+      image: gif_url,
+      attributes: completedAttributes,
+    };
+    const uploadParams: PutObjectRequest = {
+      ACL: "public-read",
+      Body: JSON.stringify(metadata),
+      Bucket: process.env.M_NFT_METADATA_BUCKET_NAME!,
+      Key: token_id + ".json",
+    };
+
+    const { Location: token_uri } = await s3.upload(uploadParams).promise();
+
+    return {
+      token_uri,
     };
   }
 }

@@ -1,8 +1,8 @@
 import { Field, InputType, ObjectType, registerEnumType } from "type-graphql";
 
 export enum TransactionStatus {
-  SUCCESS = "SUCCESS",
   FAILURE = "FAILURE",
+  SUCCESS = "SUCCESS",
   UNCERTAIN = "UNCERTAIN",
 }
 
@@ -10,10 +10,10 @@ registerEnumType(TransactionStatus, {
   name: "TransactionStatus",
 });
 
-@InputType("SendRawTransactionInput")
+@InputType("SendRawTransactionInput", { isAbstract: true })
 export class SendRawTransactionInput {
   @Field()
-  rlp!: string;
+  rlp: string;
 }
 
 @ObjectType("SendRawTransactionOutput")

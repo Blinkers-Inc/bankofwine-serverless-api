@@ -13,7 +13,7 @@ import { CreateNftConMetadataInput } from "src/resolvers/databases/nft-con-metad
 export class NftConMetadataMutationResolver {
   constructor(private nft_con_info_query_resolver: NftConInfoQueryResolver) {}
 
-  @Mutation(() => String)
+  @Mutation(() => Nft_con_metadata)
   async create_nft_con_metadata(
     @Arg("input")
     {
@@ -24,7 +24,7 @@ export class NftConMetadataMutationResolver {
       nft_con_uuid,
     }: CreateNftConMetadataInput,
     @Ctx() ctx: IContext
-  ): Promise<string> {
+  ): Promise<Nft_con_metadata> {
     const nftConInfo = await this.nft_con_info_query_resolver.nft_con_info(
       {
         uuid: nft_con_uuid,
@@ -83,6 +83,14 @@ export class NftConMetadataMutationResolver {
     console.log("batchTransactions", batchTransactions);
 
     // await ctx.prismaClient.nft_con_metadata.createMany;
-    return "hello";
+    const metadata = await ctx.prismaClient.nft_con_metadata.findUnique({
+      where: { nft_con_uuid },
+    });
+
+    if (!metadata) {
+      throw new CustomError("failed to create metadata");
+    }
+
+    return metadata;
   }
 }

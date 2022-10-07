@@ -6,6 +6,7 @@ import { IContext } from "src/common/interfaces/context";
 import { BannerQueryResolver } from "src/resolvers/databases/banner/banner.query.resolver";
 import { MemberFieldResolver } from "src/resolvers/databases/member/member.field.resolver";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
+import { MyMnftFieldResolver } from "src/resolvers/databases/my-mnft/my-mnft.field.resolver";
 import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
 import { MyNftConFieldResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.field.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
@@ -19,6 +20,7 @@ import { NftConMetadataQueryResolver } from "src/resolvers/databases/nft-con-met
 import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query.resolver";
 import { MetadataMutationResolver } from "src/resolvers/metadata/metadata.mutation.resolver";
 import { MigrationMutationResolver } from "src/resolvers/migration/migration.mutation.resolver";
+import { MigrationQueryResolver } from "src/resolvers/migration/migration.query.resolver";
 import { SampleResolver } from "src/resolvers/transaction/sample.query.resolver";
 import { TransactionMutationResolver } from "src/resolvers/transaction/transaction.mutation.resolver";
 
@@ -49,10 +51,12 @@ export const schema = buildSchemaSync({
     MemberFieldResolver,
     MemberQueryResolver,
     MetadataMutationResolver,
+    MigrationQueryResolver,
     MigrationMutationResolver,
     MyMnftQueryResolver,
-    MyNftConQueryResolver,
     MyNftConFieldResolver,
+    MyNftConQueryResolver,
+    MyMnftFieldResolver,
     NftConEditionQueryResolver,
     NftConEditionFieldResolver,
     NftConInfoFieldResolver,

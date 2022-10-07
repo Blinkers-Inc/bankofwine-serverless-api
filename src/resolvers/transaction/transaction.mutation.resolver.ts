@@ -1,4 +1,5 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Service } from "typedi";
 
 import { IContext } from "src/common/interfaces/context";
 import { sleep } from "src/helpers/sleep";
@@ -8,6 +9,7 @@ import {
   TransactionStatus,
 } from "src/resolvers/transaction/dto/send-raw-transaction.dto";
 
+@Service()
 @Resolver()
 export class TransactionMutationResolver {
   @Mutation(() => SendRawTransactionOutput)
@@ -45,7 +47,10 @@ export class TransactionMutationResolver {
             ? TransactionStatus.SUCCESS
             : TransactionStatus.FAILURE;
 
-        return { status, transactionHash };
+        return {
+          status,
+          transactionHash,
+        };
       }
     }
 

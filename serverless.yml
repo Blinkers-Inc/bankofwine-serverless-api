@@ -31,7 +31,7 @@ provider:
     serverSideEncryption: AES256
   iam:
     role:
-      name: bankofwine-serverless-role
+      name: bankofwine-serverless-role-${self:provider.stage}
       statements:
         - Effect: "Allow"
           Action:
@@ -48,7 +48,6 @@ plugins:
   - serverless-offline
 
 custom:
-  STAGE: ${self:provider.stage} # 현재 스테이지 별로 데이터베이스 접속 정보를 달리하기 위함
   webpack:
     excludeRegex: \.ts|test|\.map
     includeModules:
@@ -74,7 +73,7 @@ package:
 functions:
   graphql:
     handler: src/serverless.handler
-    name: graphql
+    name: graphql-${self:provider.stage}
     events:
       - http:
           cors: true

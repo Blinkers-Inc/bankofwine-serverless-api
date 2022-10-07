@@ -1,31 +1,162 @@
-import { Arg, Mutation, Resolver } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Service } from "typedi";
 
+import { eventKeccak256, functionKeccak256 } from "src/common/constant";
+import { CustomError, CustomErrorCode } from "src/common/error";
+import { IContext } from "src/common/interfaces/context";
+import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
+import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
+import { MetadataMutationResolver } from "src/resolvers/metadata/metadata.mutation.resolver";
 import {
   MigrateInput,
   MigrateOutput,
 } from "src/resolvers/migration/dto/migrate.dto";
+import { TransactionStatus } from "src/resolvers/transaction/dto/send-raw-transaction.dto";
+import { TransactionMutationResolver } from "src/resolvers/transaction/transaction.mutation.resolver";
 
+@Service()
 @Resolver()
 export class MigrationMutationResolver {
+  constructor(
+    private transaction_mutation_resolver: TransactionMutationResolver,
+    private my_nft_con_query_resolver: MyNftConQueryResolver,
+    private my_mnft_query_resolver: MyMnftQueryResolver,
+    private metadata_mutation_resolver: MetadataMutationResolver
+  ) {}
   @Mutation(() => MigrateOutput)
-  async migrate(@Arg("input") input: MigrateInput): Promise<MigrateOutput> {
-    //- 1. preTokenId, tokenUuid, is_mnft, senderAddress, rlp를 인풋값으로 받는다.
-    //
-    //- 2. tokenId의 owner가 senderAddress와 일치한지 검증한다.
-    //! error.1 owner와 senderAddress가 불일치하면 에러
-    //
-    //- 3. preTokenId 또는 tokenUuid의 값으로 저장된 메타데이터를 모두 호출한다.
-    //
-    //- 4. tokenUri 를 생성한다.
-    //! error.2 tokenUri 생성이 실패하면 에러
-    //! tokenUri 생성시점 vs migrate 시점 고민하기..
-    //
-    //- 5. rlp를 실행한다.
-    //! error.3 rlp가 실패하면 에러
-    //
-    //- 6. 실행된 rlp의 receipt를 가져와서 새로 생성된 토큰을 받는다.
+  async migrate(
+    @Arg("input") { rlp, my_nft_uuid, is_mnft }: MigrateInput,
+    @Ctx() ctx: IContext
+  ): Promise<MigrateOutput> {
+    //= 1. rlp에 들어간 input값 조회
+    console.log('"1"', "1");
+    const { _input } = ctx.caver.transaction.decode(rlp);
+    console.log("_input", _input);
+
+    const migrateLength = functionKeccak256.migrate.length;
+    console.log("migrateLength", migrateLength);
+
+    if (_input.slice(0, migrateLength) !== functionKeccak256.migrate) {
+      throw new CustomError("invalid transaction call");
+    }
+
+    console.log('"2"', "2");
+    const { "0": inputPreTokenId, "1": inputIsMnft } =
+      ctx.caver.abi.decodeParameters(
+        ["uint256", "bool"],
+        _input.slice(migrateLength)
+      );
+
+    console.log("inputIsMnft", inputIsMnft);
+    console.log("inputPreTokenId", inputPreTokenId);
+
+    //= 2. my_nft_uuid 를 통해 찾은 tokenId와 inputPreTokenId가 동일한지 확인한다.
+
+    let token_id;
+
+    if (is_mnft) {
+      ({ token_id } = await this.my_mnft_query_resolver.my_mnft(
+        {
+          uuid: my_nft_uuid,
+        },
+        ctx
+      ));
+    } else {
+      ({ token_id } = await this.my_nft_con_query_resolver.my_nft_con(
+        {
+          uuid: my_nft_uuid,
+        },
+        ctx
+      ));
+    }
+
+    //! error1. token_id 가 없거나 inputPreTokenId와 일치하지 않으면 에러
+
+    // if (!token_id || token_id !== inputPreTokenId) {
+    //   throw new CustomError(
+    //     "invalid token id",
+    //     CustomErrorCode.INVALID_TOKEN_ID
+    //   );
+    // }
+
+    //= 3. raw transaction 실행
+
+    const { status, transactionHash } =
+      await this.transaction_mutation_resolver.send_raw_transaction(
+        { rlp },
+        ctx
+      );
+
+    //! error2. transaction 결과가 실패할 경우 에러
+
+    if (status === TransactionStatus.FAILURE) {
+      throw new CustomError(
+        "transaction failed",
+        CustomErrorCode.TRANSACTION_FAILED
+      );
+    }
+
+    console.log("status, transactionHash", status, transactionHash);
+
+    const receipt = await ctx.caver.rpc.klay.getTransactionReceipt(
+      transactionHash
+    );
+
+    //= 4. receipt에서 Migrate 이벤트 초회
+
+    const migrateEvent = receipt.logs.filter(
+      (ele: any) => ele.topics[0] === eventKeccak256.Migrate
+    );
+
+    //! error3. Migrate 이벤트가 없을 경우 실패로 간주
+
+    if (!migrateEvent.length) {
+      throw new CustomError(
+        "no exist event log",
+        CustomErrorCode.NOT_EXIST_EVENT_LOG
+      );
+    }
+
+    const decodedInput = ctx.caver.abi.decodeParameters(
+      ["bool", "uint256", "uint256"],
+      migrateEvent[0].data
+    );
+
+    const { "0": isMnft, "1": _preTokenId, "2": newTokenId } = decodedInput;
+
+    console.log("newTokenId", newTokenId);
+    console.log("typeof newTokenId", typeof newTokenId);
+
+    //= 5. 성공한 경우 DB 업데이트 (token_id, contract_address, updated_at)
+
+    let token_uri: string;
+
+    if (isMnft) {
+      //= 6-1. M-NFT 일경우 M-NFT metadata uri 생성
+      ({ token_uri } =
+        await this.metadata_mutation_resolver.create_my_mnft_metadata_uri(
+          {
+            my_mnft_uuid: my_nft_uuid,
+            token_id: newTokenId,
+          },
+          ctx
+        ));
+    } else {
+      //= 6-2. NFT일경우 NFT metadata uri 생성
+      ({ token_uri } =
+        await this.metadata_mutation_resolver.create_my_nft_con_metadata_uri(
+          {
+            my_nft_con_uuid: my_nft_uuid,
+            token_id: newTokenId,
+          },
+          ctx
+        ));
+    }
+
     return {
-      transactionHash: "hello",
+      transactionHash,
+      token_id: newTokenId,
+      token_uri,
     };
   }
 }
