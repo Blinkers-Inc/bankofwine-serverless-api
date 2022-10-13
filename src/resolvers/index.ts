@@ -26,7 +26,6 @@ import { TransactionMutationResolver } from "src/resolvers/transaction/transacti
 
 export const authChecker = ({ context }: { context: IContext }) => {
   const { Authorization } = context;
-  console.log("Authorization", Authorization);
 
   if (!Authorization.length) {
     throw new CustomError(

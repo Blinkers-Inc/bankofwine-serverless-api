@@ -394,7 +394,11 @@ model nft_con_info {
 }
 
 model nft_con_metadata_attribute {
-  uuid                  String           @id @db.Uuid
+  id                    Int              @id @default(autoincrement())
+  created_at            DateTime         @db.Timestamp(6)
+  is_active             Boolean
+  is_delete             Boolean
+  updated_at            DateTime         @db.Timestamp(6)
   is_public             Boolean
   trait_type            String           @db.VarChar(255)
   display_type          String           @default("none") // number, ranking, date, none
@@ -408,6 +412,10 @@ model nft_con_metadata_attribute {
 model nft_con_metadata {
   uuid          String                       @id @db.Uuid
   nft_con_uuid  String                       @unique() @db.Uuid
+  created_at    DateTime                     @db.Timestamp(6)
+  is_active     Boolean
+  is_delete     Boolean
+  updated_at    DateTime                     @db.Timestamp(6)
   name          String                       @db.VarChar(255)
   description   String
   image         String

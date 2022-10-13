@@ -30,15 +30,13 @@ export class MyMnftFieldResolver {
     return this.member_query_resolver.member({ member_uid }, ctx);
   }
 
-  @FieldResolver(() => Participant)
-  async participant(
+  @FieldResolver(() => [Participant], { defaultValue: [] })
+  async participants(
     @Root() { uuid }: My_mnft,
     @Ctx() { prismaClient }: IContext
-  ): Promise<Participant> {
-    return (
-      await prismaClient.participant.findMany({
-        where: { my_mnft_uuid: uuid },
-      })
-    )[0];
+  ): Promise<Participant[]> {
+    return await prismaClient.participant.findMany({
+      where: { my_mnft_uuid: uuid },
+    });
   }
 }

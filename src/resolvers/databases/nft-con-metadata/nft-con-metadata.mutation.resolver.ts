@@ -2,6 +2,7 @@ import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
 import { uuid } from "uuidv4";
 
+import { defaultValue } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
 import { Nft_con_metadata } from "src/prisma";
@@ -45,13 +46,18 @@ export class NftConMetadataMutationResolver {
     const { gif_url, img_url } = nftConInfo;
 
     const metadataId = uuid();
+    const now = new Date();
 
     const metadataCreateTx = ctx.prismaClient.nft_con_metadata.create({
       data: {
         name,
+        created_at: now,
+        is_active: true,
+        is_delete: false,
+        updated_at: now,
         animation_url: img_url,
         description,
-        external_url: external_url!,
+        external_url: external_url ?? defaultValue.externalUrl,
         image: gif_url!,
         nft_con_uuid,
         uuid: metadataId,
@@ -69,20 +75,20 @@ export class NftConMetadataMutationResolver {
       return ctx.prismaClient.nft_con_metadata_attribute.create({
         data: {
           ...ele,
+          created_at: now,
+          is_active: true,
+          is_delete: false,
+          updated_at: now,
           nft_con_metadata_uuid: metadataId,
-          uuid: uuid(),
         },
       });
     });
 
-    const batchTransactions = await ctx.prismaClient.$transaction([
+    await ctx.prismaClient.$transaction([
       metadataCreateTx,
       ...attributesCreateTx,
     ]);
 
-    console.log("batchTransactions", batchTransactions);
-
-    // await ctx.prismaClient.nft_con_metadata.createMany;
     const metadata = await ctx.prismaClient.nft_con_metadata.findUnique({
       where: { nft_con_uuid },
     });

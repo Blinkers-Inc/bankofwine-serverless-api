@@ -7,12 +7,12 @@
     "db:pull:dev": "dotenv -e .env.dev -- npx prisma db pull",
     "db:push:dev": "dotenv -e .env.dev -- npx prisma db push",
     "db:push:prod": "dotenv -e .env.prod -- npx prisma db push",
-    "dev": "SLS_DEBUG=* rm -rf .serverless & npx sls offline --stage dev",
-    "prod": "SLS_DEBUG=* rm -rf .serverless & npx sls offline --stage prod",
-    "deploy:dev": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage dev",
-    "deploy:prod": "SLS_DEBUG=* rm -rf .serverless & npx sls deploy --stage prod",
-    "remove:dev": "npx sls remove --stage dev",
-    "remove:prod": "npx sls remove --stage prod",
+    "dev": "rm -rf .serverless & SLS_DEBUG=* npx sls offline --stage dev",
+    "prod": "rm -rf .serverless & SLS_DEBUG=* npx sls offline --stage prod",
+    "deploy:dev": "rm -rf .serverless & SLS_DEBUG=* npx sls deploy --stage dev",
+    "deploy:prod": "rm -rf .serverless & SLS_DEBUG=* npx sls deploy --stage prod",
+    "remove:dev": "SLS_DEBUG=* npx sls remove --stage dev",
+    "remove:prod": "SLS_DEBUG=* npx sls remove --stage prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

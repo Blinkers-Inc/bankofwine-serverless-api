@@ -6,3 +6,7 @@ export const eventKeccak256 = {
   ApprovalForAll:
     "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31",
 };
+
+export const defaultValue = {
+  externalUrl: "https://www.bankofwine.co/",
+};

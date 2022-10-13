@@ -6,6 +6,8 @@ import {
   registerEnumType,
 } from "type-graphql";
 
+import { defaultValue } from "src/common/constant";
+
 export enum MetadataDisplayType {
   BOOST_PERCENTAGE = "boost_percentage",
   DATE = "date",
@@ -58,7 +60,7 @@ export class CreateNftConMetadataInput {
   @Field({ defaultValue: "#cc3333", nullable: true })
   background_color?: string;
 
-  @Field({ defaultValue: "https://www.bankofwine.co/", nullable: true })
+  @Field({ defaultValue: defaultValue.externalUrl, nullable: true })
   external_url?: string;
 }
 

@@ -56,7 +56,7 @@ export class MetadataMutationResolver {
         ctx
       );
 
-    await this.nft_con_info_query_resolver.nft_con_info(
+    const { tier } = await this.nft_con_info_query_resolver.nft_con_info(
       { uuid: nft_con_uuid },
       ctx
     );
@@ -74,7 +74,15 @@ export class MetadataMutationResolver {
       ctx
     );
 
-    const { nft_con_uuid: _, uuid: __, ...rest } = nftConMetadata;
+    const {
+      nft_con_uuid: _,
+      uuid: __,
+      created_at: ___,
+      updated_at: ____,
+      is_active: _____,
+      is_delete: ______,
+      ...rest
+    } = nftConMetadata;
 
     const reducedAttributes = attributes
       .filter((ele: Nft_con_metadata_attribute) => ele.is_public === true)
@@ -101,13 +109,23 @@ export class MetadataMutationResolver {
             };
       });
 
+    const tierAttribute = {
+      display_type: MetadataDisplayType.STRING,
+      trait_type: "Tier",
+      value: tier,
+    };
+
     const editionAttribute = {
       display_type: MetadataDisplayType.NUMBER,
       trait_type: "Edition",
       value: Number(edition_no),
     };
 
-    const completedAttributes = [editionAttribute, ...reducedAttributes];
+    const completedAttributes = [
+      tierAttribute,
+      editionAttribute,
+      ...reducedAttributes,
+    ];
     const metadata = { ...rest, attributes: completedAttributes };
     const uploadParams: PutObjectRequest = {
       ACL: "public-read",
@@ -142,9 +160,6 @@ export class MetadataMutationResolver {
       throw new CustomError("empty type", CustomErrorCode.EMPTY_TYPE);
     }
 
-    console.log("mynft_uuid", mynft_uuid);
-    console.log("tasted_at", tasted_at);
-
     const { nft_con_edition_uuid } =
       await this.my_nft_con_query_resolver.my_nft_con(
         {
@@ -152,8 +167,6 @@ export class MetadataMutationResolver {
         },
         ctx
       );
-
-    console.log("nft_con_edition_uuid", nft_con_edition_uuid);
 
     const { edition_no, nft_con_uuid } =
       await this.nft_con_edition_query_resolver.nft_con_edition(
@@ -163,9 +176,7 @@ export class MetadataMutationResolver {
         ctx
       );
 
-    console.log("nft_con_uuid", nft_con_uuid);
-
-    await this.nft_con_info_query_resolver.nft_con_info(
+    const { tier } = await this.nft_con_info_query_resolver.nft_con_info(
       { uuid: nft_con_uuid },
       ctx
     );
@@ -183,7 +194,15 @@ export class MetadataMutationResolver {
       ctx
     );
 
-    const { nft_con_uuid: _, uuid: __, ...rest } = nftConMetadata;
+    const {
+      nft_con_uuid: _,
+      uuid: __,
+      created_at: ___,
+      updated_at: ____,
+      is_active: _____,
+      is_delete: ______,
+      ...rest
+    } = nftConMetadata;
 
     const reducedAttributes = attributes
       .filter((ele: Nft_con_metadata_attribute) => ele.is_public === true)
@@ -210,6 +229,12 @@ export class MetadataMutationResolver {
             };
       });
 
+    const tierAttribute = {
+      display_type: MetadataDisplayType.STRING,
+      trait_type: "Tier",
+      value: tier,
+    };
+
     const editionAttribute = {
       display_type: MetadataDisplayType.NUMBER,
       trait_type: "Edition",
@@ -222,7 +247,10 @@ export class MetadataMutationResolver {
       value: Math.floor(Date.parse(tasted_at!.toString()) / 1000),
     };
 
-    console.log("tastingDayAttribute", tastingDayAttribute);
+    const participants = await this.my_mnft_field_resolver.participants(
+      myMnft,
+      ctx
+    );
 
     const mnftEditionAttribute = {
       display_type: MetadataDisplayType.NUMBER,
@@ -230,15 +258,13 @@ export class MetadataMutationResolver {
       value:
         type === MnftType.BOTTLE
           ? 1
-          : Number(
-              (await this.my_mnft_field_resolver.participant(myMnft, ctx))
-                .edition_no!
-            ),
+          : !participants.length
+          ? 1
+          : Number(participants[0].edition_no),
     };
 
-    console.log("mnftEditionAttribute", mnftEditionAttribute);
-
     const completedAttributes = [
+      tierAttribute,
       editionAttribute,
       ...reducedAttributes,
       tastingDayAttribute,

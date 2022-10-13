@@ -29,26 +29,21 @@ export class MigrationMutationResolver {
     @Ctx() ctx: IContext
   ): Promise<MigrateOutput> {
     //= 1. rlp에 들어간 input값 조회
-    console.log('"1"', "1");
     const { _input } = ctx.caver.transaction.decode(rlp);
-    console.log("_input", _input);
 
     const migrateLength = functionKeccak256.migrate.length;
-    console.log("migrateLength", migrateLength);
 
     if (_input.slice(0, migrateLength) !== functionKeccak256.migrate) {
       throw new CustomError("invalid transaction call");
     }
 
-    console.log('"2"', "2");
-    const { "0": inputPreTokenId, "1": inputIsMnft } =
+    const { "0": inputPreTokenId, "1": _inputIsMnft } =
       ctx.caver.abi.decodeParameters(
         ["uint256", "bool"],
         _input.slice(migrateLength)
       );
 
-    console.log("inputIsMnft", inputIsMnft);
-    console.log("inputPreTokenId", inputPreTokenId);
+    const convertPreTokenId = ctx.caver.utils.toBN(inputPreTokenId).toString();
 
     //= 2. my_nft_uuid 를 통해 찾은 tokenId와 inputPreTokenId가 동일한지 확인한다.
 
@@ -70,14 +65,16 @@ export class MigrationMutationResolver {
       ));
     }
 
+    const convertTokenId = ctx.caver.utils.toBN(token_id).toString();
+
     //! error1. token_id 가 없거나 inputPreTokenId와 일치하지 않으면 에러
 
-    // if (!token_id || token_id !== inputPreTokenId) {
-    //   throw new CustomError(
-    //     "invalid token id",
-    //     CustomErrorCode.INVALID_TOKEN_ID
-    //   );
-    // }
+    if (!convertTokenId || convertTokenId !== convertPreTokenId) {
+      throw new CustomError(
+        "invalid token id",
+        CustomErrorCode.INVALID_TOKEN_ID
+      );
+    }
 
     //= 3. raw transaction 실행
 
@@ -92,11 +89,10 @@ export class MigrationMutationResolver {
     if (status === TransactionStatus.FAILURE) {
       throw new CustomError(
         "transaction failed",
-        CustomErrorCode.TRANSACTION_FAILED
+        CustomErrorCode.TRANSACTION_FAILED,
+        { transactionHash }
       );
     }
-
-    console.log("status, transactionHash", status, transactionHash);
 
     const receipt = await ctx.caver.rpc.klay.getTransactionReceipt(
       transactionHash
@@ -105,6 +101,7 @@ export class MigrationMutationResolver {
     //= 4. receipt에서 Migrate 이벤트 초회
 
     const migrateEvent = receipt.logs.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (ele: any) => ele.topics[0] === eventKeccak256.Migrate
     );
 
@@ -113,7 +110,13 @@ export class MigrationMutationResolver {
     if (!migrateEvent.length) {
       throw new CustomError(
         "no exist event log",
-        CustomErrorCode.NOT_EXIST_EVENT_LOG
+        CustomErrorCode.NOT_EXIST_EVENT_LOG,
+        {
+          my_nft_uuid,
+          is_mnft,
+          status,
+          transactionHash,
+        }
       );
     }
 
@@ -123,11 +126,6 @@ export class MigrationMutationResolver {
     );
 
     const { "0": isMnft, "1": _preTokenId, "2": newTokenId } = decodedInput;
-
-    console.log("newTokenId", newTokenId);
-    console.log("typeof newTokenId", typeof newTokenId);
-
-    //= 5. 성공한 경우 DB 업데이트 (token_id, contract_address, updated_at)
 
     let token_uri: string;
 
@@ -141,6 +139,18 @@ export class MigrationMutationResolver {
           },
           ctx
         ));
+
+      //= 5-1. 성공한 경우 my_mnft DB 업데이트 (token_id, contract_address, updated_at)
+      await ctx.prismaClient.my_mnft.update({
+        where: {
+          uuid: my_nft_uuid,
+        },
+        data: {
+          token_id: newTokenId,
+          contract_address: process.env.CUR_M_NFT_CONTRACT_ADDRESS,
+          updated_at: new Date(),
+        },
+      });
     } else {
       //= 6-2. NFT일경우 NFT metadata uri 생성
       ({ token_uri } =
@@ -151,6 +161,18 @@ export class MigrationMutationResolver {
           },
           ctx
         ));
+
+      //= 5-2. 성공한 경우 my_nft_con DB 업데이트 (token_id, contract_address, updated_at)
+      await ctx.prismaClient.my_nft_con.update({
+        where: {
+          uuid: my_nft_uuid,
+        },
+        data: {
+          token_id: newTokenId,
+          contract_address: process.env.CUR_NFT_CONTRACT_ADDRESS,
+          updated_at: new Date(),
+        },
+      });
     }
 
     return {

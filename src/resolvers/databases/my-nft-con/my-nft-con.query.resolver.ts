@@ -1,4 +1,4 @@
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Directive, Query, Resolver } from "type-graphql";
 import { Service } from "typedi";
 
 import { MemberUidInput } from "src/common/dto/uuid.input";
@@ -10,6 +10,7 @@ import { My_nft_con } from "src/prisma";
 @Resolver(My_nft_con)
 export class MyNftConQueryResolver {
   @Query(() => My_nft_con)
+  @Directive("@cacheControl(maxAge:0)")
   async my_nft_con(
     @Arg("input") { uuid }: UuidInput,
     @Ctx() { prismaClient }: IContext
@@ -20,6 +21,7 @@ export class MyNftConQueryResolver {
   }
 
   @Query(() => [My_nft_con], { defaultValue: [] })
+  @Directive("@cacheControl(maxAge:0)")
   async my_nft_cons(
     @Arg("input") { member_uid }: MemberUidInput,
     @Ctx() { prismaClient }: IContext

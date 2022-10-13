@@ -48,6 +48,9 @@ plugins:
   - serverless-offline
 
 custom:
+  provisionedConcurrency:
+    dev: 3
+    prod: 20
   webpack:
     excludeRegex: \.ts|test|\.map
     includeModules:
@@ -79,3 +82,4 @@ functions:
           cors: true
           path: /graphql
           method: any
+    provisionedConcurrency: ${self:custom.provisionedConcurrency.${opt:stage, self:provider.stage}}
