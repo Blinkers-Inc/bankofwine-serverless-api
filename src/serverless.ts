@@ -55,10 +55,9 @@ const server = new ApolloServer({
   plugins,
   schema,
   formatError: (err) => {
-    const { message } = err;
+    const { message, path } = err;
     const { code, exception } = err.extensions;
-    const path = err.path?.length && err.path[0];
-    const { errorCode } = exception;
+    const { errorCode, data } = exception;
 
     if (!Boolean(process.env.IS_OFFLINE)) {
       sendCustomError({
@@ -66,6 +65,7 @@ const server = new ApolloServer({
         code,
         path,
         errorCode,
+        data,
       });
     }
 

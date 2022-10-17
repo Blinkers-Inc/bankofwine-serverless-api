@@ -51,7 +51,7 @@ export class MetadataMutationResolver {
     const { edition_no, nft_con_uuid } =
       await this.nft_con_edition_query_resolver.nft_con_edition(
         {
-          uuid: nft_con_edition_uuid!,
+          uuid: nft_con_edition_uuid,
         },
         ctx
       );
@@ -171,7 +171,7 @@ export class MetadataMutationResolver {
     const { edition_no, nft_con_uuid } =
       await this.nft_con_edition_query_resolver.nft_con_edition(
         {
-          uuid: nft_con_edition_uuid!,
+          uuid: nft_con_edition_uuid,
         },
         ctx
       );
@@ -244,7 +244,7 @@ export class MetadataMutationResolver {
     const tastingDayAttribute = {
       display_type: MetadataDisplayType.DATE,
       trait_type: "Tasting Day",
-      value: Math.floor(Date.parse(tasted_at!.toString()) / 1000),
+      value: Math.floor(Date.parse(tasted_at.toString()) / 1000),
     };
 
     const participants = await this.my_mnft_field_resolver.participants(

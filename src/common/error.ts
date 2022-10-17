@@ -30,7 +30,7 @@ export class CustomError extends ApolloError {
   private static readonly ERROR_NAME = "CUSTOM_SERVER_ERROR";
   public errorCode: string = CustomError.ERROR_NAME;
 
-  constructor(message: string, errorCode?: string, data?: any) {
+  constructor(message: string, errorCode?: CustomErrorCode, data?: any) {
     super(message, CustomError.ERROR_NAME);
     Error.captureStackTrace(this, CustomError);
 

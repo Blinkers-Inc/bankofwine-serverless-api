@@ -1,6 +1,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
 
+import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
 import { sleep } from "src/helpers/sleep";
 import {
@@ -28,7 +29,9 @@ export class TransactionMutationResolver {
           submit: true,
         }));
     } catch (err: any) {
-      throw new Error(err.message);
+      throw new CustomError(err.message, CustomErrorCode.TRANSACTION_FAILED, {
+        rlp,
+      });
     }
 
     let limit = 0;

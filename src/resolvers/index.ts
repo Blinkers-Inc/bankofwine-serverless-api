@@ -23,6 +23,7 @@ import { MigrationMutationResolver } from "src/resolvers/migration/migration.mut
 import { MigrationQueryResolver } from "src/resolvers/migration/migration.query.resolver";
 import { SampleResolver } from "src/resolvers/transaction/sample.query.resolver";
 import { TransactionMutationResolver } from "src/resolvers/transaction/transaction.mutation.resolver";
+import { VaultQueryResolver } from "src/resolvers/vault/vault.query.resolver";
 
 export const authChecker = ({ context }: { context: IContext }) => {
   const { Authorization } = context;
@@ -38,7 +39,9 @@ export const authChecker = ({ context }: { context: IContext }) => {
     return true;
   }
 
-  throw new CustomError("Access denied", CustomErrorCode.ACCESS_DENIED);
+  throw new CustomError("Access denied", CustomErrorCode.ACCESS_DENIED, {
+    Authorization,
+  });
   // return false; // or false if access is denied
 };
 
@@ -65,6 +68,7 @@ export const schema = buildSchemaSync({
     NftConMetadataQueryResolver,
     SampleResolver,
     TransactionMutationResolver,
+    VaultQueryResolver,
     WalletQueryResolver,
   ],
 });

@@ -307,7 +307,7 @@ model my_mnft {
   price                 Float?        @db.Real
   signature_img_url     String?       @db.VarChar(255)
   status                String?       @db.VarChar(255)
-  tasted_at             DateTime?     @db.Timestamp(6)
+  tasted_at             DateTime      @db.Timestamp(6)
   token_id              String?       @db.VarChar(255)
   type                  String?       @db.VarChar(255)
   member_uid            String        @db.VarChar(255)
@@ -320,21 +320,21 @@ model my_mnft {
 }
 
 model my_nft_con {
-  uuid                 String           @id @db.Uuid
-  created_at           DateTime         @db.Timestamp(6)
+  uuid                 String          @id @db.Uuid
+  created_at           DateTime        @db.Timestamp(6)
   is_active            Boolean
   is_delete            Boolean
-  updated_at           DateTime         @db.Timestamp(6)
-  deposit_at           DateTime?        @db.Timestamp(6)
-  seller_id            String?          @db.VarChar(255)
-  status               String?          @db.VarChar(255)
-  member_uid           String           @db.VarChar(255)
-  nft_con_edition_uuid String?          @db.Uuid
+  updated_at           DateTime        @db.Timestamp(6)
+  deposit_at           DateTime?       @db.Timestamp(6)
+  seller_id            String?         @db.VarChar(255)
+  status               String?         @db.VarChar(255)
+  member_uid           String          @db.VarChar(255)
+  nft_con_edition_uuid String          @db.Uuid
   is_burnt             Boolean?
-  token_id             String?          @db.VarChar(255)
-  contract_address     String?          @db.VarChar(255)
-  nft_con_edition      nft_con_edition? @relation(fields: [nft_con_edition_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fk2xv3pqyhuy3tfumwd4m7cgsm3")
-  member               member           @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkpe58693g6nuyw0s3qa124s7m")
+  token_id             String?         @db.VarChar(255)
+  contract_address     String?         @db.VarChar(255)
+  nft_con_edition      nft_con_edition @relation(fields: [nft_con_edition_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fk2xv3pqyhuy3tfumwd4m7cgsm3")
+  member               member          @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkpe58693g6nuyw0s3qa124s7m")
   my_mnft              my_mnft[]
   redeem_tx            redeem_tx?
   trade_tx             trade_tx[]
@@ -370,6 +370,12 @@ model nft_con_info {
   updated_at       DateTime          @db.Timestamp(6)
   creator          String            @db.VarChar(255)
   updater          String            @db.VarChar(255)
+  name             String            @db.VarChar(255)
+  short_name       String            @db.VarChar(255)
+  tier             String            @db.VarChar(255)
+  type_en          String            @db.VarChar(255)
+  type_ko          String            @db.VarChar(255)
+  vintage          String            @db.VarChar(255)
   abv              String?           @db.VarChar(255)
   capacity         String?           @db.VarChar(255)
   description_en   String?
@@ -377,20 +383,16 @@ model nft_con_info {
   grape_variety_en String?           @db.VarChar(255)
   grape_variety_ko String?           @db.VarChar(255)
   img_url          String?           @db.VarChar(255)
-  name             String?           @db.VarChar(255)
   nft_id           String?           @db.VarChar(255)
   region_en        String?           @db.VarChar(255)
   region_ko        String?           @db.VarChar(255)
   sort             BigInt?
-  tier             String?           @db.VarChar(255)
-  type_en          String?           @db.VarChar(255)
-  type_ko          String?           @db.VarChar(255)
-  vintage          String?           @db.VarChar(255)
   winery           String?           @db.VarChar(255)
   is_buyable       Boolean?
   gif_bg_color     String?           @db.VarChar(255)
   gif_url          String?           @db.VarChar(255)
   nft_con_edition  nft_con_edition[]
+  metadata         nft_con_metadata?
 }
 
 model nft_con_metadata_attribute {
@@ -422,13 +424,14 @@ model nft_con_metadata {
   external_url  String
   animation_url String?
   attributes    nft_con_metadata_attribute[]
+  nft_con_info  nft_con_info                 @relation(fields: [nft_con_uuid], references: [uuid])
 }
 
 model participant {
   uuid         String  @id @db.Uuid
   member_uid   String  @db.VarChar(255)
   my_mnft_uuid String  @db.Uuid
-  edition_no   BigInt?
+  edition_no   BigInt
   member       member  @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkcfurr7ot0v8vyblqs821npnm1")
   my_mnft      my_mnft @relation(fields: [my_mnft_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fknagcg1592ufsqj5nb4199nek4")
 }

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "handler.js",
   "scripts": {
-    "pre:install": "npx prisma generate",
+    "prisma:generate": "dotenv -e .env.dev -- npx prisma generate",
     "db:pull:dev": "dotenv -e .env.dev -- npx prisma db pull",
     "db:push:dev": "dotenv -e .env.dev -- npx prisma db push",
     "db:push:prod": "dotenv -e .env.prod -- npx prisma db push",
