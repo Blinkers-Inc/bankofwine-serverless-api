@@ -1,6 +1,7 @@
 import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
 
+import { ERC721_ABI } from "src/abi/ERC721";
 import { IContext } from "src/common/interfaces/context";
 import { Member, My_nft_con, Nft_con_edition } from "src/prisma";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
@@ -33,5 +34,26 @@ export class MyNftConFieldResolver {
       { uuid: nft_con_edition_uuid },
       ctx
     );
+  }
+
+  @FieldResolver(() => String, { nullable: true })
+  async token_owner_address(
+    @Root()
+    {
+      token_id,
+      contract_address = process.env.PRE_NFT_CONTRACT_ADDRESS,
+    }: My_nft_con,
+    @Ctx() { caver }: IContext
+  ): Promise<string | null> {
+    if (!token_id) return null;
+
+    const instance = new caver.klay.Contract(ERC721_ABI, contract_address);
+    const convertTokenId = caver.utils.toBN(token_id).toString();
+
+    try {
+      return await instance.methods.ownerOf(Number(convertTokenId)).call();
+    } catch {
+      return null;
+    }
   }
 }

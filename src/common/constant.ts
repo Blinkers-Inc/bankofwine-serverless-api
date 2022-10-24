@@ -1,3 +1,5 @@
+import { NftConEditionStatus } from "src/resolvers/databases/nft-con-edition/dto/field.status.dto";
+
 export const functionKeccak256 = {
   migrate: "0xbbf3df0c",
 };
@@ -9,4 +11,29 @@ export const eventKeccak256 = {
 
 export const defaultValue = {
   externalUrl: "https://www.bankofwine.co/",
+};
+
+export const countries: { [key: string]: string } = {
+  France: "프랑스",
+  Italy: "이탈리아",
+  USA: "미국",
+  Chile: "칠레",
+  Australia: "호주",
+};
+
+export const types: { [key: string]: string } = {
+  Red: "레드",
+  White: "화이트",
+  Rose: "로제",
+  Sparkling: "스파클링",
+  Dessert: "디저트",
+  Fortified: "주정강화",
+};
+
+export const NftConEditionStatusKr: {
+  [key: string]: string;
+} = {
+  PURCHASABLE: "구매가능",
+  REDEEMED: "교환완료",
+  SOLD: "판매완료",
 };

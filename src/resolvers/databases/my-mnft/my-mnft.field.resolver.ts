@@ -1,6 +1,7 @@
 import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
 
+import { ERC721_ABI } from "src/abi/ERC721";
 import { IContext } from "src/common/interfaces/context";
 import { Member, My_mnft, My_nft_con, Participant } from "src/prisma";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
@@ -38,5 +39,26 @@ export class MyMnftFieldResolver {
     return await prismaClient.participant.findMany({
       where: { my_mnft_uuid: uuid },
     });
+  }
+
+  @FieldResolver(() => String, { nullable: true })
+  async token_owner_address(
+    @Root()
+    {
+      token_id,
+      contract_address = process.env.PRE_NFT_CONTRACT_ADDRESS,
+    }: My_mnft,
+    @Ctx() { caver }: IContext
+  ): Promise<string | null> {
+    if (!token_id) return null;
+
+    const instance = new caver.klay.Contract(ERC721_ABI, contract_address);
+    const convertTokenId = caver.utils.toBN(token_id).toString();
+
+    try {
+      return await instance.methods.ownerOf(Number(convertTokenId)).call();
+    } catch {
+      return null;
+    }
   }
 }

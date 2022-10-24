@@ -11,13 +11,10 @@ export class MigrationQueryResolver {
   @Query(() => Boolean)
   @Directive("@cacheControl(maxAge:0)")
   async is_approved_for_all(
-    @Arg("input") { owner, operator }: IsApprovedForAllInput,
+    @Arg("input") { owner, operator, nft_contract }: IsApprovedForAllInput,
     @Ctx() { caver }: IContext
   ): Promise<boolean> {
-    const instance = new caver.klay.Contract(
-      ERC721_ABI,
-      process.env.PRE_NFT_CONTRACT_ADDRESS
-    );
+    const instance = new caver.klay.Contract(ERC721_ABI, nft_contract);
 
     return instance.methods.isApprovedForAll(owner, operator).call();
   }

@@ -18,6 +18,17 @@ export class WalletQueryResolver {
     });
   }
 
+  @Query(() => Wallet, { nullable: true })
+  async latest_wallet(
+    @Arg("input") { member_uid }: MemberUidInput,
+    @Ctx() { prismaClient }: IContext
+  ): Promise<Wallet | null> {
+    return prismaClient.wallet.findFirst({
+      where: { member_uid },
+      orderBy: { updated_at: "desc" },
+    });
+  }
+
   @Query(() => [Wallet], { defaultValue: [] })
   async wallets(
     @Arg("input") { member_uid }: MemberUidInput,

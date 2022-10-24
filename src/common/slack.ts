@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const TEST_URL =
-  "https://hooks.slack.com/services/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";
+  "https://hooks.slack.com/services/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";
 
 export const sendCustomError = async (input: {
   code?: string;
@@ -16,7 +16,7 @@ export const sendCustomError = async (input: {
     text: `Graphql 에러 발생 : ${process.env.STAGE}`,
     attachments: [
       {
-        title: `code : ${code}`,
+        title: `code : ${code ? code : "none"}`,
         value: code,
         short: true,
       },
@@ -29,7 +29,9 @@ export const sendCustomError = async (input: {
         short: false,
       },
       {
-        title: `message : ${message}`,
+        title: `message : ${
+          message ? JSON.stringify(message).slice(0, 255) : "none"
+        }`,
         short: false,
       },
       {
@@ -42,7 +44,7 @@ export const sendCustomError = async (input: {
   try {
     await axios.post(TEST_URL, slackMessage);
     console.log("슬랙 전송 완료");
-  } catch {
+  } catch (err) {
     console.log("슬랙 전송 중 오류 발생");
   }
 };
