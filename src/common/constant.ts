@@ -1,4 +1,4 @@
-import { NftConEditionStatus } from "src/resolvers/databases/nft-con-edition/dto/field.status.dto";
+export const BOW_NICKNAME = "B.O.W";
 
 export const functionKeccak256 = {
   migrate: "0xbbf3df0c",
@@ -30,10 +30,16 @@ export const types: { [key: string]: string } = {
   Fortified: "주정강화",
 };
 
-export const NftConEditionStatusKr: {
+export const NftConEditionPurchasableStatusKr: {
   [key: string]: string;
 } = {
   PURCHASABLE: "구매가능",
   REDEEMED: "교환완료",
   SOLD: "판매완료",
+};
+
+export const timestamps: { [key: string]: number } = {
+  THIRTY_DAYS_MILLISECONDS: 60 * 60 * 24 * 30 * 1000,
+  ONE_WEEK_MILLISECONDS: 60 * 60 * 24 * 7 * 1000,
+  ONE_DAY_MILLISECONDS: 60 * 60 * 24 * 1000,
 };

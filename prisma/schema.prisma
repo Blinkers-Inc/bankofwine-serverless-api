@@ -348,8 +348,8 @@ model nft_con_edition {
   updated_at    DateTime       @db.Timestamp(6)
   creator       String         @db.VarChar(255)
   updater       String         @db.VarChar(255)
-  edition_no    BigInt?
-  minting_at    DateTime?      @db.Timestamp(6)
+  edition_no    BigInt
+  minting_at    DateTime       @db.Timestamp(6)
   status        String?        @db.VarChar(255)
   owner         String?        @db.VarChar(255)
   price         BigInt

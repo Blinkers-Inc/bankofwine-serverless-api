@@ -7,7 +7,7 @@ import {
   registerEnumType,
 } from "type-graphql";
 
-import { NftConEditionStatus } from "src/resolvers/databases/nft-con-edition/dto/field.status.dto";
+import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-edition/dto/field/nft-con-edition-status.dto";
 import { VaultDetailsInput } from "src/resolvers/vault/dto/vault-details.dto";
 
 export enum Tier {
@@ -54,10 +54,13 @@ export class VaultRelatedEdition {
   price: number;
 
   @Field()
-  owner: string;
+  owner_nickname: string;
 
-  @Field(() => NftConEditionStatus)
-  status: NftConEditionStatus;
+  @Field()
+  owner_address: string;
+
+  @Field(() => NftConEditionPurchasableStatus)
+  status: NftConEditionPurchasableStatus;
 
   @Field()
   status_kr: string;

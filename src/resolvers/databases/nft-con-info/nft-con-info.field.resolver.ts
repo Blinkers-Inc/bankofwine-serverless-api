@@ -2,9 +2,11 @@ import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
 
 import { IContext } from "src/common/interfaces/context";
+import { getVaultDetailByAttributes } from "src/helpers/get-detail-by-attributes";
 import { Nft_con_edition, Nft_con_info, Nft_con_metadata } from "src/prisma";
 import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
 import { NftConMetadataQueryResolver } from "src/resolvers/databases/nft-con-metadata/nft-con-metadata.query.resolver";
+import { VaultDetail } from "src/resolvers/vault/dto/vault-details.dto";
 
 @Service()
 @Resolver(Nft_con_info)
@@ -38,5 +40,42 @@ export class NftConInfoFieldResolver {
       },
       ctx
     );
+  }
+
+  @FieldResolver(() => VaultDetail)
+  async vault_detail(
+    @Root() { uuid }: Nft_con_info,
+    @Ctx() { prismaClient }: IContext
+  ): Promise<VaultDetail> {
+    const nftConWithVaultDetail =
+      await prismaClient.nft_con_info.findUniqueOrThrow({
+        where: {
+          uuid,
+        },
+        include: {
+          metadata: {
+            include: {
+              attributes: true,
+            },
+          },
+        },
+      });
+
+    const attributes = nftConWithVaultDetail.metadata?.attributes;
+    const metadata = nftConWithVaultDetail.metadata;
+    const initVaultDetail: VaultDetail = {
+      grapes: [],
+    };
+
+    if (!attributes || !attributes.length) {
+      return initVaultDetail;
+    }
+
+    const vaultDetail = getVaultDetailByAttributes({
+      metadata: metadata as Nft_con_metadata,
+      attributes,
+    });
+
+    return vaultDetail;
   }
 }

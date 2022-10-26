@@ -1,10 +1,14 @@
 import { Arg, Ctx, Directive, Query, Resolver } from "type-graphql";
 import { Service } from "typedi";
 
-import { countries, NftConEditionStatusKr, types } from "src/common/constant";
+import {
+  countries,
+  NftConEditionPurchasableStatusKr,
+  types,
+} from "src/common/constant";
 import { IContext } from "src/common/interfaces/context";
 import { Nft_con_info } from "src/prisma";
-import { NftConEditionStatus } from "src/resolvers/databases/nft-con-edition/dto/field.status.dto";
+import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-edition/dto/field/nft-con-edition-status.dto";
 import { NftConEditionFieldResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.field.resolver";
 import {
   VaultDetail,
@@ -37,9 +41,9 @@ export class VaultQueryResolver {
 
   tierSortList = [Tier.OG, Tier.SPCL, Tier.PUBLIC, Tier.EVENT];
   statusSortList = [
-    NftConEditionStatus.PURCHASABLE,
-    NftConEditionStatus.SOLD,
-    NftConEditionStatus.REDEEMED,
+    NftConEditionPurchasableStatus.PURCHASABLE,
+    NftConEditionPurchasableStatus.SOLD,
+    NftConEditionPurchasableStatus.REDEEMED,
   ];
 
   @Query(() => VaultListOutput, { defaultValue: [] })
@@ -49,7 +53,11 @@ export class VaultQueryResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<VaultListOutput> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const args: any = {};
+    const args: any = {
+      where: {
+        is_active: true,
+      },
+    };
 
     switch (sort) {
       case VaultListSort.ALPHABETICAL_ASC:
@@ -89,7 +97,7 @@ export class VaultQueryResolver {
           return acc;
         }
 
-        //TODO: 이름 같을 경우 edition 말고 normal 이미지 사용해야함 (vintage 관계없이)
+        // TODO: 이름 같을 경우 edition 말고 normal 이미지 사용해야함 (vintage 관계없이)
 
         const sliced = acc.slice(0, -1);
         acc.push(cur);
@@ -117,6 +125,7 @@ export class VaultQueryResolver {
     const nfts = await prismaClient.nft_con_info.findMany({
       where: {
         short_name,
+        is_active: true,
       },
       orderBy: {
         vintage: "asc",
@@ -259,6 +268,7 @@ export class VaultQueryResolver {
     const nfts = await ctx.prismaClient.nft_con_info.findMany({
       where: {
         short_name,
+        is_active: true,
       },
       orderBy: {
         vintage: "asc",
@@ -283,13 +293,16 @@ export class VaultQueryResolver {
         continue;
       }
 
-      for (const edition of nft_con_edition) {
+      for await (const edition of nft_con_edition) {
         const { edition_no, price } = edition;
 
-        const owner = await this.nft_con_edition_field_resolver.owner(
-          edition,
-          ctx
-        );
+        const owner_nickname =
+          await this.nft_con_edition_field_resolver.owner_nickname(
+            edition,
+            ctx
+          );
+        const owner_address =
+          await this.nft_con_edition_field_resolver.owner_address(edition, ctx);
         const status = await this.nft_con_edition_field_resolver.status(
           edition,
           ctx
@@ -300,9 +313,10 @@ export class VaultQueryResolver {
           tier: tier as Tier,
           vintage,
           capacity: capacity ?? "750ml",
-          owner,
+          owner_nickname,
+          owner_address,
           status,
-          status_kr: NftConEditionStatusKr[status],
+          status_kr: NftConEditionPurchasableStatusKr[status],
           edition_no: !Number(edition_no) ? 0 : Number(edition_no),
           price: !Number(price) ? 0 : Number(price),
         };

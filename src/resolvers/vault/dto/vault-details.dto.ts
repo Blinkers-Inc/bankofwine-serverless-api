@@ -64,6 +64,9 @@ export class VaultDetail {
 
   @Field({ nullable: true })
   description_kr?: string;
+
+  @Field({ nullable: true })
+  lwin?: string;
 }
 
 @ObjectType("VaultDetailsOutput")

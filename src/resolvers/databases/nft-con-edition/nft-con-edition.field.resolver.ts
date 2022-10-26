@@ -1,11 +1,13 @@
 import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
 
+import { BOW_NICKNAME } from "src/common/constant";
 import { IContext } from "src/common/interfaces/context";
 import { Nft_con_edition, Nft_con_info } from "src/prisma";
-import { MyNftConStatus } from "src/resolvers/databases/my-nft-con/my-nft-con.dto";
-import { MyNftConFieldResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.field.resolver";
-import { NftConEditionStatus } from "src/resolvers/databases/nft-con-edition/dto/field.status.dto";
+import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
+import { MyNftConStatus } from "src/resolvers/databases/my-nft-con/dto/my-nft-con.dto";
+import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
+import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-edition/dto/field/nft-con-edition-status.dto";
 import { NftConInfoQueryResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.query.resolver";
 import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query.resolver";
 
@@ -14,8 +16,9 @@ import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query
 export class NftConEditionFieldResolver {
   constructor(
     private nft_con_info_query_resolver: NftConInfoQueryResolver,
-    private my_nft_con_field_resolver: MyNftConFieldResolver,
-    private wallet_query_resolver: WalletQueryResolver
+    private wallet_query_resolver: WalletQueryResolver,
+    private member_query_resolver: MemberQueryResolver,
+    private my_nft_con_query_resolver: MyNftConQueryResolver
   ) {}
 
   @FieldResolver(() => Nft_con_info)
@@ -40,14 +43,15 @@ export class NftConEditionFieldResolver {
     return false;
   }
 
-  @FieldResolver(() => NftConEditionStatus)
+  @FieldResolver(() => NftConEditionPurchasableStatus)
   async status(
     @Root() root: Nft_con_edition,
     @Ctx() ctx: IContext
-  ): Promise<NftConEditionStatus> {
+  ): Promise<NftConEditionPurchasableStatus> {
     const { status, my_nft_con } = root;
 
-    if (status === "AVAILABLE") return NftConEditionStatus.PURCHASABLE;
+    if (status === "AVAILABLE")
+      return NftConEditionPurchasableStatus.PURCHASABLE;
 
     if (
       status === "SOLD" &&
@@ -55,7 +59,7 @@ export class NftConEditionFieldResolver {
       my_nft_con.status === MyNftConStatus.PAID &&
       (await this.isValidListing(root, ctx))
     )
-      return NftConEditionStatus.PURCHASABLE;
+      return NftConEditionPurchasableStatus.PURCHASABLE;
 
     if (
       my_nft_con &&
@@ -63,32 +67,38 @@ export class NftConEditionFieldResolver {
         my_nft_con.status === MyNftConStatus.REDEEM_COMPLETE ||
         my_nft_con.status === MyNftConStatus.REDEEM_COMPLETE)
     )
-      return NftConEditionStatus.REDEEMED;
+      return NftConEditionPurchasableStatus.REDEEMED;
 
-    return NftConEditionStatus.SOLD;
+    return NftConEditionPurchasableStatus.SOLD;
   }
 
   @FieldResolver(() => String)
-  async owner(
+  async owner_nickname(
     @Root() root: Nft_con_edition,
     @Ctx() ctx: IContext
   ): Promise<string> {
-    const { status, my_nft_con, owner } = root;
+    const { status, my_nft_con } = root;
 
-    if (status === "AVAILABLE") return "B.O.W";
+    if (status === "AVAILABLE") return BOW_NICKNAME;
 
     if (my_nft_con) {
-      const member = await this.my_nft_con_field_resolver.member(
-        my_nft_con,
+      const { member_uid, token_id, contract_address } = my_nft_con;
+      const member = await this.member_query_resolver.member(
+        { member_uid },
         ctx
       );
+
       const { nick_nm } = member;
 
       if (nick_nm) return nick_nm; // 닉네임 있으면 닉네임 리턴
 
       const tokenOwnerAddress =
-        await this.my_nft_con_field_resolver.token_owner_address(
-          my_nft_con,
+        await this.my_nft_con_query_resolver.token_owner_address(
+          {
+            token_id: token_id ?? undefined,
+            contract_address:
+              contract_address ?? process.env.PRE_NFT_CONTRACT_ADDRESS,
+          },
           ctx
         );
 
@@ -106,18 +116,34 @@ export class NftConEditionFieldResolver {
       if (latest_wallet) return latest_wallet.address; // 최근 연결된 월렛 주소 리턴
     }
 
-    if (status === "SOLD" && owner) {
-      console.log("owner", owner);
-      console.log("status", status);
-      const latest_wallet = await this.wallet_query_resolver.latest_wallet(
-        { member_uid: owner },
+    return BOW_NICKNAME; // 케이스에 해당하지 않는 경우 공식 이름 리턴
+  }
+
+  @FieldResolver(() => String)
+  async owner_address(
+    @Root() root: Nft_con_edition,
+    @Ctx() ctx: IContext
+  ): Promise<string> {
+    const { status, my_nft_con } = root;
+
+    if (status === "AVAILABLE" || !my_nft_con) {
+      return process.env.BLACK_HOLE_ADDRESS!; // 상태가 구매가능하거나 my_nft_con이 없는 경우 블랙홀로 보냄
+    }
+
+    const { token_id, contract_address } = my_nft_con;
+
+    const tokenOwnerAddress =
+      await this.my_nft_con_query_resolver.token_owner_address(
+        {
+          token_id: token_id ?? undefined,
+          contract_address:
+            contract_address ?? process.env.PRE_NFT_CONTRACT_ADDRESS,
+        },
         ctx
       );
 
-      if (latest_wallet) return latest_wallet.address;
-      if (!latest_wallet) return owner.slice(0, 6);
-    }
+    if (tokenOwnerAddress) return tokenOwnerAddress; // tokenOwnerAddress가 있으면 리턴
 
-    return "B.O.W"; // 케이스에 해당하지 않는 경우 공식 이름 리턴
+    return process.env.BLACK_HOLE_ADDRESS!; // 없는 경우 블랙홀 address 리턴
   }
 }
