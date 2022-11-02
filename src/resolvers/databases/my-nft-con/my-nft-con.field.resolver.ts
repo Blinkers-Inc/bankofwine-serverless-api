@@ -1,10 +1,11 @@
-import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
+import { Arg, Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
 
 import { ERC721_ABI } from "src/abi/ERC721";
 import { IContext } from "src/common/interfaces/context";
-import { Member, My_nft_con, Nft_con_edition } from "src/prisma";
+import { Member, My_mnft, My_nft_con, Nft_con_edition } from "src/prisma";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
+import { MyMnftOfMyNftConInput } from "src/resolvers/databases/my-nft-con/dto/field/my-mnft.dto";
 import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
 
 @Service()
@@ -15,12 +16,26 @@ export class MyNftConFieldResolver {
     private nft_con_edition_query_resolver: NftConEditionQueryResolver
   ) {}
 
-  @FieldResolver(() => Member)
-  async member(
+  @FieldResolver(() => Member, { description: "최초 민팅한 유저" })
+  async minting_member(
     @Root() { member_uid }: My_nft_con,
     @Ctx() ctx: IContext
   ): Promise<Member> {
     return this.member_query_resolver.member({ member_uid }, ctx);
+  }
+
+  @FieldResolver(() => Member, {
+    description: "현재 소유주, 거래 발생시 current_owner_uid 가 기준",
+  })
+  async current_owner(
+    @Root() { member_uid, current_owner_uid }: My_nft_con,
+    @Ctx() ctx: IContext
+  ): Promise<Member> {
+    const currentMemberUid = current_owner_uid ?? member_uid;
+    return this.member_query_resolver.member(
+      { member_uid: currentMemberUid },
+      ctx
+    );
   }
 
   @FieldResolver(() => Nft_con_edition, { nullable: true })
@@ -36,23 +51,39 @@ export class MyNftConFieldResolver {
     );
   }
 
+  @FieldResolver(() => [My_mnft], { defaultValue: [] })
+  async my_mnfts(
+    @Root()
+    { member_uid, current_owner_uid, uuid }: My_nft_con,
+    @Arg("input")
+    { current_owner_uid: currentMemberUidInput }: MyMnftOfMyNftConInput,
+    @Ctx() { prismaClient }: IContext
+  ): Promise<My_mnft[]> {
+    const currentMemberUid =
+      currentMemberUidInput ?? member_uid ?? current_owner_uid;
+
+    return prismaClient.my_mnft.findMany({
+      where: { mynft_uuid: uuid, member_uid: currentMemberUid },
+    });
+  }
+
   @FieldResolver(() => String, { nullable: true })
   async token_owner_address(
     @Root()
-    {
-      token_id,
-      contract_address = process.env.PRE_NFT_CONTRACT_ADDRESS,
-    }: My_nft_con,
+    { token_id, contract_address }: My_nft_con,
     @Ctx() { caver }: IContext
   ): Promise<string | null> {
     if (!token_id) return null;
 
-    const instance = new caver.klay.Contract(ERC721_ABI, contract_address);
+    const contractAddress =
+      contract_address ?? process.env.PRE_NFT_CONTRACT_ADDRESS;
+    const instance = new caver.klay.Contract(ERC721_ABI, contractAddress);
     const convertTokenId = caver.utils.toBN(token_id).toString();
 
     try {
       return await instance.methods.ownerOf(Number(convertTokenId)).call();
-    } catch {
+    } catch (err) {
+      console.log("err", err);
       return null;
     }
   }

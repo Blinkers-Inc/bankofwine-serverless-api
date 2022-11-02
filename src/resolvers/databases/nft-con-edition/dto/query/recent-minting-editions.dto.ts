@@ -1,4 +1,4 @@
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, Int, ObjectType } from "type-graphql";
 
 import { timestamps } from "src/common/constant";
 import { PaginationInput } from "src/common/dto/pagination.input";
@@ -8,10 +8,8 @@ import { Tier } from "src/resolvers/vault/dto/vault-raw-related-editions.dto";
 
 @InputType("RecentMintingEditionsInput")
 export class RecentMintingEditionsInput extends PaginationInput {
-  @Field(() => Number, {
-    defaultValue: new Date().valueOf() - timestamps.THIRTY_DAYS_MILLISECONDS,
-  })
-  from_timestamp?: number;
+  @Field(() => Int, { defaultValue: 12 })
+  take?: number;
 
   @Field(() => Number, {
     defaultValue: new Date().valueOf() + timestamps.ONE_WEEK_MILLISECONDS,

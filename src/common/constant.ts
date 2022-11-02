@@ -1,4 +1,7 @@
 export const BOW_NICKNAME = "B.O.W";
+export const MINIMUM_LISTING_PRICE = 1_000;
+export const MAXIMUM_LISTING_PRICE = 1_000_000_000;
+export const COMMISSION_PERCENTAGE = 0.05;
 
 export const functionKeccak256 = {
   migrate: "0xbbf3df0c",

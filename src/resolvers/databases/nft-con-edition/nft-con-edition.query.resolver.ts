@@ -8,7 +8,6 @@ import { Nft_con_edition, Nft_con_metadata } from "src/prisma";
 import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-edition/dto/field/nft-con-edition-status.dto";
 import { NftConEditionsInput } from "src/resolvers/databases/nft-con-edition/dto/query/nft-con-editions.dto";
 import {
-  PurchasableEdition,
   PurchasableEditionsInput,
   PurchasableEditionsOutput,
 } from "src/resolvers/databases/nft-con-edition/dto/query/purchasable-editions.dto";
@@ -57,18 +56,27 @@ export class NftConEditionQueryResolver {
   @Directive("@cacheControl(maxAge:0)")
   async recent_minting_editions(
     @Arg("input")
-    { from_timestamp, to_timestamp }: RecentMintingEditionsInput,
+    { to_timestamp, take = 12 }: RecentMintingEditionsInput,
     @Ctx() ctx: IContext
   ): Promise<RecentMintingEdition[]> {
     const editionsOrderByMintingAt =
       // minting_at, nft_con_uuid가 동일한 리스트를 묶음
       await ctx.prismaClient.nft_con_edition.groupBy({
+        take, // maximum 12
         by: ["minting_at", "nft_con_uuid"],
         orderBy: {
           minting_at: "desc",
         },
         where: {
           AND: [
+            {
+              is_active: true,
+            },
+            {
+              minting_at: {
+                lte: new Date(to_timestamp as number),
+              }, // 1 weak later
+            },
             {
               nft_con_info: {
                 tier: {
@@ -77,16 +85,6 @@ export class NftConEditionQueryResolver {
                 is_active: true,
               },
             }, // EVENT 제외 (PUBLIC, SPCL, OG)
-            {
-              minting_at: {
-                gte: new Date(from_timestamp as number),
-              }, // 1 month before
-            },
-            {
-              minting_at: {
-                lte: new Date(to_timestamp as number),
-              }, // 1 weak later
-            },
           ],
         },
       });
@@ -208,7 +206,7 @@ export class NftConEditionQueryResolver {
 
     const statusByEditions = await Promise.all(
       totalEditions.map((edition) =>
-        this.nft_con_edition_field_resolver.status(edition, ctx)
+        this.nft_con_edition_field_resolver.purchasable_status(edition, ctx)
       )
     );
 
@@ -217,61 +215,40 @@ export class NftConEditionQueryResolver {
         statusByEditions[index] === NftConEditionPurchasableStatus.PURCHASABLE
     ); // 구매가능한 NFT 만 필터링
 
-    // TODO 리스팅시점(민팅 또는 리스팅시점), 구매가능가격(민팅 또는 리스팅가) 여기서 가져오면 좋을 듯
+    const latestListingInfoList = await Promise.all(
+      filtered.map((edition) =>
+        this.nft_con_edition_field_resolver.latest_listing_info(edition, ctx)
+      )
+    );
 
-    const sorted = filtered.sort((a, b) => {
-      // TODO : 민팅시점 -> 숏네임 -> edition_no 순으로 정렬
+    const mapped = filtered.map((edition, index) => {
+      return { ...edition, latestListingInfo: latestListingInfoList[index] };
+    }); // latestListingInfoList 추가 (정렬 위함)
+
+    const sorted = mapped.sort((a, b) => {
+      // 민팅시점 > 숏네임 > edition_no 순으로 정렬
+      const aListingAt = new Date(a.latestListingInfo.listing_at).valueOf();
+      const bListingAt = new Date(b.latestListingInfo.listing_at).valueOf();
+
+      if (aListingAt !== bListingAt) {
+        return bListingAt - aListingAt;
+      }
+
       const aShortName = a.nft_con_info.short_name;
       const bShortName = b.nft_con_info.short_name;
 
-      if (aShortName === bShortName) {
-        return Number(a.edition_no) - Number(b.edition_no);
+      if (aShortName !== bShortName) {
+        return aShortName.localeCompare(bShortName);
       }
 
-      return aShortName.localeCompare(bShortName);
-    }); // short_name asc - 같을 경우 edition_no asc
+      return Number(a.edition_no) - Number(b.edition_no);
+    });
 
-    const sliced = sorted.slice(skip, take);
-    const editions = sliced.reduce((acc, cur) => {
-      const nft_con_info = cur.nft_con_info;
-      const attributes = nft_con_info.metadata?.attributes;
-      const metadata = nft_con_info.metadata;
-
-      if (!attributes || !attributes.length) {
-        return acc;
-      }
-
-      const vaultDetail = getVaultDetailByAttributes({
-        metadata: metadata as Nft_con_metadata,
-        attributes,
-      });
-
-      const purchasableEdition: PurchasableEdition = {
-        nft_con_edition_uuid: cur.uuid,
-        nft_con_uuid: nft_con_info.uuid,
-        minting_price: Number(cur.price), // TODO: 구매가능한 금액으로 변경해야함 (리스팅 또는 민팅가)
-        minting_at: cur.minting_at, // TODO: 리스팅한 시간 또는 민팅 시간으로 정렬해야 하는데..
-        img_url: nft_con_info.gif_url!,
-        tier: nft_con_info.tier as Tier,
-        short_name: nft_con_info.short_name,
-        edition_no: Number(cur.edition_no),
-        ...vaultDetail,
-      };
-
-      acc.push(purchasableEdition);
-      return acc;
-    }, [] as PurchasableEdition[]);
+    const sliced = sorted.slice(skip, skip + take);
 
     return {
       total_count: sorted.length,
-      editions,
+      editions: sliced,
     };
   }
 }
-
-// TODO : 히스토리 구현해야함
-// TODO : 리스팅 구현해야함
-// TODO : 리스팅 취소 구현해야함
-// TODO : 리스팅 수정 구현해야함
-// TODO : 엣치케이스로 인해 발생하는 리스팅 자동취소? 구현해야 함
-// TODO : 상세페이지 구현해야함

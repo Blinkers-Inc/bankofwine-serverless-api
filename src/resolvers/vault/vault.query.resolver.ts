@@ -294,7 +294,7 @@ export class VaultQueryResolver {
       }
 
       for await (const edition of nft_con_edition) {
-        const { edition_no, price } = edition;
+        const { edition_no } = edition;
 
         const owner_nickname =
           await this.nft_con_edition_field_resolver.owner_nickname(
@@ -303,10 +303,16 @@ export class VaultQueryResolver {
           );
         const owner_address =
           await this.nft_con_edition_field_resolver.owner_address(edition, ctx);
-        const status = await this.nft_con_edition_field_resolver.status(
-          edition,
-          ctx
-        );
+        const status =
+          await this.nft_con_edition_field_resolver.purchasable_status(
+            edition,
+            ctx
+          );
+        const price =
+          await this.nft_con_edition_field_resolver.current_exposure_price(
+            edition,
+            ctx
+          );
 
         const result = {
           nft_con_edition_uuid: edition.uuid,
@@ -318,7 +324,7 @@ export class VaultQueryResolver {
           status,
           status_kr: NftConEditionPurchasableStatusKr[status],
           edition_no: !Number(edition_no) ? 0 : Number(edition_no),
-          price: !Number(price) ? 0 : Number(price),
+          price,
         };
 
         editions.push(result);

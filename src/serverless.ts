@@ -21,8 +21,8 @@ import { sendCustomError } from "src/common/slack";
 
 const { KAS_ACCESS_KEY, KAS_CHAIN_ID, KAS_SECRET_ACCESS_KEY } = process.env;
 
-const plugins = [
-  process.env.NODE_ENV === "production"
+let plugins = [
+  !process.env.IS_OFFLINE
     ? ApolloServerPluginLandingPageDisabled()
     : ApolloServerPluginLandingPageGraphQLPlayground(),
   ApolloServerPluginTracing() as ApolloServerPlugin, // 로컬에서 tracing 가능
@@ -34,13 +34,19 @@ const plugins = [
   }),
 ];
 
-process.env.NODE_ENV === "production" &&
-  plugins.push(ApolloServerPluginSchemaReporting());
+if (!process.env.IS_OFFLINE) {
+  plugins = [
+    ...plugins,
+    ApolloServerPluginSchemaReporting({
+      initialDelayMaxMs: 10,
+    }),
+  ];
+}
 
 const server = new ApolloServer({
   context: async ({
     event: {
-      headers: { Authorization },
+      headers: { Authorization, uid },
     },
   }): Promise<IContext> => {
     const caver = new CaverExtKas(
@@ -49,7 +55,7 @@ const server = new ApolloServer({
       KAS_SECRET_ACCESS_KEY
     );
 
-    return { Authorization, caver, prismaClient };
+    return { Authorization, uid, caver, prismaClient };
   },
   introspection: true,
   plugins,
@@ -59,7 +65,7 @@ const server = new ApolloServer({
     const { code, exception } = err.extensions;
     const { errorCode, data } = exception;
 
-    if (!Boolean(process.env.IS_OFFLINE)) {
+    if (!process.env.IS_OFFLINE) {
       sendCustomError({
         message,
         code,

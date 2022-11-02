@@ -1,6 +1,7 @@
 import { Field, InputType, Int, ObjectType } from "type-graphql";
 
 import { PaginationInput } from "src/common/dto/pagination.input";
+import { Nft_con_edition } from "src/prisma";
 import { RecentMintingEdition } from "src/resolvers/databases/nft-con-edition/dto/query/recent-minting-editions.dto";
 
 @InputType("PurchasableEditionsInput")
@@ -20,8 +21,8 @@ export class PurchasableEdition extends RecentMintingEdition {
 
 @ObjectType("PurchasableEditionsOutput")
 export class PurchasableEditionsOutput {
-  @Field(() => [PurchasableEdition])
-  editions: PurchasableEdition[];
+  @Field(() => [Nft_con_edition])
+  editions: Nft_con_edition[];
 
   @Field(() => Number)
   total_count: number;

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const TEST_URL =
-  "https://hooks.slack.com/services/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";
+  "https://hooks.slack.com/services/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";
 
 export const sendCustomError = async (input: {
   code?: string;
@@ -45,6 +45,7 @@ export const sendCustomError = async (input: {
     await axios.post(TEST_URL, slackMessage);
     console.log("슬랙 전송 완료");
   } catch (err) {
+    console.log("err", err);
     console.log("슬랙 전송 중 오류 발생");
   }
 };

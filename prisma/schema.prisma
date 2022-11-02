@@ -189,6 +189,23 @@ model biz_msg {
   rcs_refkey      String?   @db.VarChar(32)
 }
 
+enum AdminDepositStatus {
+  DEPOSIT
+  WITHDRAW
+}
+
+model admin_deposit {
+  uuid                  String             @id @db.Uuid
+  created_at            DateTime           @db.Timestamp(6)
+  is_active             Boolean
+  is_delete             Boolean
+  updated_at            DateTime           @db.Timestamp(6)
+  status                AdminDepositStatus
+  price                 BigInt
+  my_nft_con_uuid       String?            @db.Uuid
+  market_trade_log_uuid String?            @db.Uuid
+}
+
 model deposit {
   uuid                 String       @id @db.Uuid
   created_at           DateTime     @db.Timestamp(6)
@@ -327,7 +344,7 @@ model my_nft_con {
   updated_at           DateTime        @db.Timestamp(6)
   deposit_at           DateTime?       @db.Timestamp(6)
   seller_id            String?         @db.VarChar(255)
-  status               String?         @db.VarChar(255)
+  status               String          @db.VarChar(255)
   member_uid           String          @db.VarChar(255)
   nft_con_edition_uuid String          @unique() @db.Uuid
   is_burnt             Boolean?
@@ -337,7 +354,35 @@ model my_nft_con {
   member               member          @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkpe58693g6nuyw0s3qa124s7m")
   my_mnft              my_mnft[]
   redeem_tx            redeem_tx?
+  is_listing           Boolean         @default(false)
+  current_owner_uid    String?         @db.VarChar(255)
   trade_tx             trade_tx[]
+}
+
+enum MarketTradeStatus {
+  MINT
+  LIST
+  LIST_CANCEL
+  OFFER
+  OFFER_CANCEL
+  PURCHASE
+  SELL
+  REDEEM
+}
+
+model market_trade_log {
+  uuid            String            @id @db.Uuid
+  created_at      DateTime          @db.Timestamp(6)
+  is_active       Boolean
+  is_delete       Boolean
+  updated_at      DateTime          @db.Timestamp(6)
+  status          MarketTradeStatus // LIST, LIST_CANCEL, PURCHASE, (SELL, OFFER, OFFER_CANCEL)
+  sub_total       BigInt
+  commission      BigInt
+  total           BigInt
+  my_nft_con_uuid String            @db.Uuid
+  from            String            @db.VarChar(255)
+  to              String?           @db.VarChar(255)
 }
 
 model nft_con_edition {
@@ -350,7 +395,7 @@ model nft_con_edition {
   updater       String         @db.VarChar(255)
   edition_no    BigInt
   minting_at    DateTime       @db.Timestamp(6)
-  status        String?        @db.VarChar(255)
+  status        String         @db.VarChar(255)
   owner         String?        @db.VarChar(255)
   price         BigInt
   redeem_status String?        @db.VarChar(255)
@@ -498,6 +543,27 @@ model trade_tx {
   my_nft_con         my_nft_con?     @relation(fields: [mynft_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fkhd2ba8p6xfu7vjfm3uvbud295")
   member             member          @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkle4e3m3ee290mvjona82fxfip")
   deposit            deposit         @relation(fields: [deposit_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fksdi7xxq3npyx3680qd73h76ex")
+}
+
+model market_trade_tx {
+  uuid                  String            @id @db.Uuid
+  created_at            DateTime          @db.Timestamp(6)
+  is_active             Boolean
+  is_delete             Boolean
+  updated_at            DateTime          @db.Timestamp(6)
+  buyer_uid             String
+  buyer_wallet_address  String
+  seller_uid            String
+  seller_wallet_address String
+  status                MarketTradeStatus
+  buyer_spend           BigInt
+  seller_earn           BigInt
+  admin_commission      BigInt
+  transaction_hash      String
+  my_nft_con_uuid       String            @db.Uuid
+  nft_con_edition_uuid  String            @db.Uuid
+  market_trade_log_uuid String            @db.Uuid
+  admin_deposit_uuid    String            @db.Uuid
 }
 
 model wallet {

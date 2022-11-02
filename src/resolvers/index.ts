@@ -4,11 +4,13 @@ import { Container } from "typedi";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
 import { BannerQueryResolver } from "src/resolvers/databases/banner/banner.query.resolver";
+import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
 import { MemberFieldResolver } from "src/resolvers/databases/member/member.field.resolver";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
 import { MyMnftFieldResolver } from "src/resolvers/databases/my-mnft/my-mnft.field.resolver";
 import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
 import { MyNftConFieldResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.field.resolver";
+import { MyNftConMutationResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.mutation.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
 import { NftConEditionFieldResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.field.resolver";
 import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
@@ -21,6 +23,7 @@ import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query
 import { MetadataMutationResolver } from "src/resolvers/metadata/metadata.mutation.resolver";
 import { MigrationMutationResolver } from "src/resolvers/migration/migration.mutation.resolver";
 import { MigrationQueryResolver } from "src/resolvers/migration/migration.query.resolver";
+import { TradeLogFieldResolver } from "src/resolvers/trade-log/trade-log.field.resolver";
 import { SampleResolver } from "src/resolvers/transaction/sample.query.resolver";
 import { TransactionMutationResolver } from "src/resolvers/transaction/transaction.mutation.resolver";
 import { VaultQueryResolver } from "src/resolvers/vault/vault.query.resolver";
@@ -50,25 +53,31 @@ export const schema = buildSchemaSync({
   container: Container,
   resolvers: [
     BannerQueryResolver,
-    MemberFieldResolver,
+    DepositQueryResolver,
     MemberQueryResolver,
-    MetadataMutationResolver,
     MigrationQueryResolver,
-    MigrationMutationResolver,
     MyMnftQueryResolver,
-    MyNftConFieldResolver,
     MyNftConQueryResolver,
-    MyMnftFieldResolver,
     NftConEditionQueryResolver,
-    NftConEditionFieldResolver,
-    NftConInfoFieldResolver,
     NftConInfoQueryResolver,
-    NftConMetadataFieldResolver,
-    NftConMetadataMutationResolver,
     NftConMetadataQueryResolver,
-    SampleResolver,
-    TransactionMutationResolver,
     VaultQueryResolver,
     WalletQueryResolver,
+
+    MetadataMutationResolver,
+    MigrationMutationResolver,
+    MyNftConMutationResolver,
+    NftConMetadataMutationResolver,
+    TransactionMutationResolver,
+
+    MemberFieldResolver,
+    MyNftConFieldResolver,
+    MyMnftFieldResolver,
+    NftConEditionFieldResolver,
+    NftConInfoFieldResolver,
+    NftConMetadataFieldResolver,
+    TradeLogFieldResolver,
+
+    SampleResolver,
   ],
 });

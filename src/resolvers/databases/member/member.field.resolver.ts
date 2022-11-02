@@ -1,8 +1,20 @@
 import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
 
+import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
-import { Deposit, Member, My_mnft, My_nft_con, Wallet } from "src/prisma";
+import {
+  Deposit,
+  MarketTradeStatus,
+  Member,
+  My_mnft,
+  My_nft_con,
+  Wallet,
+} from "src/prisma";
+import {
+  TradeLog,
+  TradeLogOutput,
+} from "src/resolvers/databases/member/dto/field/trade-log.dto";
 import { MyMnftFieldResolver } from "src/resolvers/databases/my-mnft/my-mnft.field.resolver";
 import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
 import { MyNftConFieldResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.field.resolver";
@@ -28,16 +40,23 @@ export class MemberFieldResolver {
     return this.wallet_query_resolver.wallets({ member_uid }, ctx);
   }
 
-  @FieldResolver(() => [Deposit])
-  async deposits(
-    @Root() { uid: member_uid }: Member,
-    @Ctx() ctx: IContext
-  ): Promise<Deposit[]> {
-    return ctx.prismaClient.deposit.findMany({
+  @FieldResolver(() => Deposit)
+  async deposit(
+    @Root() input: Member,
+    @Ctx() { prismaClient }: IContext
+  ): Promise<Deposit> {
+    const { uid: member_uid } = input;
+    const deposits = await prismaClient.deposit.findMany({
       where: {
         member_uid,
       },
     });
+
+    if (!deposits.length) {
+      throw new CustomError("invalid uid", CustomErrorCode.INVALID_UID, input);
+    }
+
+    return deposits[0];
   }
 
   @FieldResolver(() => [My_nft_con])
@@ -86,5 +105,87 @@ export class MemberFieldResolver {
         address !== null &&
         address.toLowerCase() !== process.env.BLACK_HOLE_ADDRESS?.toLowerCase()
     ) as string[];
+  }
+
+  @FieldResolver(() => TradeLogOutput)
+  async trade_log(
+    @Root() root: Member,
+    @Ctx() ctx: IContext
+  ): Promise<TradeLogOutput> {
+    const { uid } = root;
+    const { prismaClient } = ctx;
+
+    const tradeTxs = await prismaClient.trade_tx.findMany({
+      take: 10_000,
+      where: {
+        member_uid: uid,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    const mappingTradeTxs: TradeLog[] = tradeTxs.map((tradeTx) => {
+      return {
+        uuid: tradeTx.uuid,
+        created_at: tradeTx.created_at,
+        price: Number(tradeTx.amount),
+        status: MarketTradeStatus.PURCHASE,
+        nft_con_edition_uuid: tradeTx.item_uuid,
+      };
+    });
+
+    const marketTradeTxs = await prismaClient.market_trade_tx.findMany({
+      take: 10_000,
+      where: { OR: [{ buyer_uid: uid }, { seller_uid: uid }] },
+      orderBy: { created_at: "desc" },
+    });
+
+    const mappingMarketTradeTxs: TradeLog[] = marketTradeTxs.map(
+      (marketTradeTx) => {
+        if (marketTradeTx.buyer_uid === uid) {
+          return {
+            uuid: marketTradeTx.uuid,
+            created_at: marketTradeTx.created_at,
+            price: Number(marketTradeTx.buyer_spend),
+            status: MarketTradeStatus.PURCHASE,
+            nft_con_edition_uuid: marketTradeTx.nft_con_edition_uuid,
+          };
+        } else {
+          return {
+            uuid: marketTradeTx.uuid,
+            created_at: marketTradeTx.created_at,
+            price: Number(marketTradeTx.seller_earn),
+            status: MarketTradeStatus.SELL,
+            nft_con_edition_uuid: marketTradeTx.nft_con_edition_uuid,
+          };
+        }
+      }
+    );
+
+    const list = [...mappingTradeTxs, ...mappingMarketTradeTxs].sort((a, b) => {
+      const aCreatedAt = new Date(a.created_at).valueOf();
+      const bCreatedAt = new Date(b.created_at).valueOf();
+
+      return bCreatedAt - aCreatedAt;
+    });
+
+    const prices = list.reduce(
+      (acc, cur) => {
+        if (cur.status === MarketTradeStatus.PURCHASE) {
+          acc.total_purchase_price += cur.price;
+        } else {
+          acc.total_sell_price += cur.price;
+        }
+
+        return acc;
+      },
+      {
+        total_purchase_price: 0,
+        total_sell_price: 0,
+      }
+    );
+
+    return { list, ...prices };
   }
 }

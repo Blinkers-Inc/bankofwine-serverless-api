@@ -11,4 +11,7 @@ export abstract class IContext {
 
   @Field({ defaultValue: "" })
   Authorization: string;
+
+  @Field({ defaultValue: "" })
+  uid: string;
 }

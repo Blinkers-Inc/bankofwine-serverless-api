@@ -44,15 +44,14 @@ export class MyMnftFieldResolver {
   @FieldResolver(() => String, { nullable: true })
   async token_owner_address(
     @Root()
-    {
-      token_id,
-      contract_address = process.env.PRE_NFT_CONTRACT_ADDRESS,
-    }: My_mnft,
+    { token_id, contract_address }: My_mnft,
     @Ctx() { caver }: IContext
   ): Promise<string | null> {
     if (!token_id) return null;
 
-    const instance = new caver.klay.Contract(ERC721_ABI, contract_address);
+    const contractAddress =
+      contract_address ?? process.env.PRE_NFT_CONTRACT_ADDRESS;
+    const instance = new caver.klay.Contract(ERC721_ABI, contractAddress);
     const convertTokenId = caver.utils.toBN(token_id).toString();
 
     try {

@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from "uuid";
 
 import { defaultValue } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
