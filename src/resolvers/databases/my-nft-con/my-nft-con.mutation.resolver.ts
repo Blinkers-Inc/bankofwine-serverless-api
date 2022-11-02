@@ -696,12 +696,34 @@ export class MyNftConMutationResolver {
       },
     });
 
-    // my_nft_con
-    const myNftConTransaction = prismaClient.my_nft_con.update({
+    // 기존 NFT 삭제 처리
+    const myNftConDeleteTransaction = prismaClient.my_nft_con.update({
       where: { uuid: myNftCon.uuid },
       data: {
+        is_active: false,
+        is_delete: true,
+        updated_at: now,
+      },
+    });
+
+    // 신규 NFT 생성
+    const newMyNftConUuid = uuid();
+    const newMyNftConTransaction = prismaClient.my_nft_con.create({
+      data: {
+        uuid: newMyNftConUuid,
+        created_at: now,
+        is_active: true,
+        is_delete: false,
+        updated_at: now,
+        deposit_at: now,
+        seller_id: myNftCon.member_uid,
+        status: myNftCon.status,
+        member_uid: buyerUid,
+        nft_con_edition_uuid: myNftCon.nft_con_edition_uuid,
+        is_burnt: myNftCon.is_burnt,
+        token_id: myNftCon.token_id,
+        contract_address: myNftCon.contract_address,
         is_listing: false,
-        current_owner_uid: buyerUid,
       },
     });
 
@@ -711,7 +733,8 @@ export class MyNftConMutationResolver {
         sellerDepositTransaction,
         marketTradeLogTransaction,
         marketTradeTxTransaction,
-        myNftConTransaction,
+        myNftConDeleteTransaction,
+        newMyNftConTransaction,
         adminDepositTransaction,
       ]);
     } catch (err) {
@@ -726,7 +749,7 @@ export class MyNftConMutationResolver {
 
     return prismaClient.my_nft_con.findUniqueOrThrow({
       where: {
-        uuid: my_nft_con_uuid,
+        uuid: newMyNftConUuid,
       },
     });
   }

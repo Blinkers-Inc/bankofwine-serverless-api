@@ -30,17 +30,8 @@ export class MyNftConQueryResolver {
   ): Promise<My_nft_con[]> {
     return prismaClient.my_nft_con.findMany({
       where: {
-        OR: [
-          {
-            is_active: true,
-            current_owner_uid: member_uid,
-          },
-          {
-            is_active: true,
-            current_owner_uid: null,
-            member_uid,
-          },
-        ],
+        is_active: true,
+        member_uid,
       },
     });
   }

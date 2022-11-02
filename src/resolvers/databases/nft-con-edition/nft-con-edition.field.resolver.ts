@@ -44,11 +44,22 @@ export class NftConEditionFieldResolver {
     @Root() { uuid }: Nft_con_edition,
     @Ctx() { prismaClient }: IContext
   ): Promise<My_nft_con | null> {
-    return await prismaClient.my_nft_con.findUnique({
+    const myNftCons = await prismaClient.my_nft_con.findMany({
+      take: 1,
       where: {
+        is_active: true,
         nft_con_edition_uuid: uuid,
       },
+      orderBy: {
+        created_at: "desc",
+      },
     });
+
+    if (!myNftCons.length) {
+      return null;
+    }
+
+    return myNftCons[0];
   }
 
   @FieldResolver(() => String)
@@ -63,11 +74,10 @@ export class NftConEditionFieldResolver {
     const my_nft_con = await this.my_nft_con(root, ctx);
 
     if (my_nft_con) {
-      const { member_uid, current_owner_uid, token_id, contract_address } =
-        my_nft_con;
-      const currentMemberUid = current_owner_uid ?? member_uid;
+      const { member_uid, token_id, contract_address } = my_nft_con;
+
       const member = await this.member_query_resolver.member(
-        { member_uid: currentMemberUid },
+        { member_uid },
         ctx
       );
 
@@ -91,7 +101,7 @@ export class NftConEditionFieldResolver {
         return tokenOwnerAddress; // 토큰 주인의 주소가 블랙홀 주소가 아니면 주인 주소 리턴
 
       const latest_wallet = await this.wallet_query_resolver.latest_wallet(
-        { member_uid: currentMemberUid },
+        { member_uid },
         ctx
       );
 
@@ -233,7 +243,6 @@ export class NftConEditionFieldResolver {
       is_delete,
       nft_con_edition_uuid,
       member_uid,
-      current_owner_uid,
       status,
     } = my_nft_con;
 
@@ -287,7 +296,7 @@ export class NftConEditionFieldResolver {
         commission: BigInt(0),
         total: BigInt(0),
         my_nft_con_uuid,
-        from: current_owner_uid ?? member_uid,
+        from: member_uid,
         to: BOW_NICKNAME,
       };
 

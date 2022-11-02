@@ -28,14 +28,10 @@ export class MyNftConFieldResolver {
     description: "현재 소유주, 거래 발생시 current_owner_uid 가 기준",
   })
   async current_owner(
-    @Root() { member_uid, current_owner_uid }: My_nft_con,
+    @Root() { member_uid }: My_nft_con,
     @Ctx() ctx: IContext
   ): Promise<Member> {
-    const currentMemberUid = current_owner_uid ?? member_uid;
-    return this.member_query_resolver.member(
-      { member_uid: currentMemberUid },
-      ctx
-    );
+    return this.member_query_resolver.member({ member_uid }, ctx);
   }
 
   @FieldResolver(() => Nft_con_edition, { nullable: true })
@@ -54,13 +50,12 @@ export class MyNftConFieldResolver {
   @FieldResolver(() => [My_mnft], { defaultValue: [] })
   async my_mnfts(
     @Root()
-    { member_uid, current_owner_uid, uuid }: My_nft_con,
+    { member_uid, uuid }: My_nft_con,
     @Arg("input")
-    { current_owner_uid: currentMemberUidInput }: MyMnftOfMyNftConInput,
+    { current_owner_uid }: MyMnftOfMyNftConInput,
     @Ctx() { prismaClient }: IContext
   ): Promise<My_mnft[]> {
-    const currentMemberUid =
-      currentMemberUidInput ?? member_uid ?? current_owner_uid;
+    const currentMemberUid = current_owner_uid ?? member_uid;
 
     return prismaClient.my_mnft.findMany({
       where: { mynft_uuid: uuid, member_uid: currentMemberUid },

@@ -346,16 +346,15 @@ model my_nft_con {
   seller_id            String?         @db.VarChar(255)
   status               String          @db.VarChar(255)
   member_uid           String          @db.VarChar(255)
-  nft_con_edition_uuid String          @unique() @db.Uuid
+  nft_con_edition_uuid String          @db.Uuid
+  nft_con_edition      nft_con_edition @relation(fields: [nft_con_edition_uuid], references: [uuid])
   is_burnt             Boolean?
   token_id             String?         @db.VarChar(255)
   contract_address     String?         @db.VarChar(255)
-  nft_con_edition      nft_con_edition @relation(fields: [nft_con_edition_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fk2xv3pqyhuy3tfumwd4m7cgsm3")
   member               member          @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkpe58693g6nuyw0s3qa124s7m")
   my_mnft              my_mnft[]
   redeem_tx            redeem_tx?
   is_listing           Boolean         @default(false)
-  current_owner_uid    String?         @db.VarChar(255)
   trade_tx             trade_tx[]
 }
 
@@ -402,9 +401,9 @@ model nft_con_edition {
   sort          BigInt?
   nft_con_uuid  String         @db.Uuid
   nft_con_info  nft_con_info   @relation(fields: [nft_con_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "fkhxp8uif8i5xqjtcc936wiqch9")
-  my_nft_con    my_nft_con?
   trade_result  trade_result[]
   trade_tx      trade_tx[]
+  my_nft_con    my_nft_con[]
 }
 
 model nft_con_info {
