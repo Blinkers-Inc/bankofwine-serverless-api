@@ -23,3 +23,9 @@ export class NftConUuidInput {
   @Field()
   nft_con_uuid!: string;
 }
+
+@InputType("NftConEditionUuidInput")
+export class NftConEditionUuidInput {
+  @Field()
+  nft_con_edition_uuid!: string;
+}

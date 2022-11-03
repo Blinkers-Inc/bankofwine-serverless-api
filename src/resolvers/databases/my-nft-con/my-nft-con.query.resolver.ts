@@ -29,6 +29,9 @@ export class MyNftConQueryResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<My_nft_con[]> {
     return prismaClient.my_nft_con.findMany({
+      orderBy: {
+        created_at: "desc",
+      },
       where: {
         is_active: true,
         member_uid,

@@ -3,15 +3,15 @@ import { Field, InterfaceType } from "type-graphql";
 
 @InterfaceType()
 export abstract class IContext {
-  @Field(() => PrismaClient)
+  @Field(() => PrismaClient, { name: "prismaClient" })
   prismaClient: PrismaClient;
 
-  @Field(() => JSON)
+  @Field(() => JSON, { name: "caver" })
   caver: any;
 
-  @Field({ defaultValue: "" })
+  @Field({ defaultValue: "", name: "Authorization" })
   Authorization: string;
 
-  @Field({ defaultValue: "" })
+  @Field({ defaultValue: "", name: "uid" })
   uid: string;
 }

@@ -2,6 +2,7 @@ import { Arg, Ctx, Directive, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
 import { v4 as uuid } from "uuid";
 
+import { dynamoClient } from "src/common/aws";
 import {
   COMMISSION_PERCENTAGE,
   MAXIMUM_LISTING_PRICE,
@@ -84,17 +85,6 @@ export class MyNftConMutationResolver {
       },
     });
 
-    const { uid: currentOwnerUid } =
-      await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
-
-    if (uid !== currentOwnerUid) {
-      throw new CustomError(
-        "mismatch current owner",
-        CustomErrorCode.MISMATCH_CURRENT_OWNER,
-        input
-      );
-    } // 소유주와 일치하지 않은 경우
-
     if (
       !myNftCon.is_active ||
       myNftCon.status !== "PAID" ||
@@ -115,17 +105,39 @@ export class MyNftConMutationResolver {
       );
     } // is_burnt 상태가 true인 경우
 
+    const { uid: myNftConOwnerUid } =
+      await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
+
+    if (uid !== myNftConOwnerUid) {
+      throw new CustomError(
+        "mismatch current owner",
+        CustomErrorCode.MISMATCH_CURRENT_OWNER,
+        input
+      );
+    } // API를 보내는 유저가 일치하지 않는 경우
+
     if (myNftCon.contract_address !== process.env.CUR_NFT_CONTRACT_ADDRESS) {
       throw new CustomError(
         "need migration",
         CustomErrorCode.NEED_MIGRATION,
         input
       );
-    } // 컨트랙트 address가 불일치한 경우 (마이그레이션 필요)
+    } // 컨트랙트 address가 유효하지 않은 경우 (마이그레이션 필요)
+
     const marketTradeLogs = await prismaClient.market_trade_log.findMany({
       take: 1,
       where: {
-        my_nft_con_uuid: myNftCon.uuid,
+        AND: [
+          {
+            my_nft_con_uuid: myNftCon.uuid,
+          },
+        ],
+        NOT: {
+          OR: [
+            { status: MarketTradeStatus.OFFER },
+            { status: MarketTradeStatus.OFFER_CANCEL },
+          ],
+        },
       },
       orderBy: {
         created_at: "desc",
@@ -275,17 +287,6 @@ export class MyNftConMutationResolver {
       },
     });
 
-    const { uid: currentOwnerUid } =
-      await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
-
-    if (uid !== currentOwnerUid) {
-      throw new CustomError(
-        "mismatch current owner",
-        CustomErrorCode.MISMATCH_CURRENT_OWNER,
-        input
-      );
-    } // 소유주와 일치하지 않은 경우
-
     if (
       !myNftCon.is_active ||
       myNftCon.status !== "PAID" ||
@@ -312,12 +313,33 @@ export class MyNftConMutationResolver {
         CustomErrorCode.NEED_MIGRATION,
         input
       );
-    } // 컨트랙트 address가 불일치한 경우 (마이그레이션 필요)
+    } // 컨트랙트 address가 유효하지 않은 경우 (마이그레이션 필요)
+
+    const { uid: myNftConOwnerUid } =
+      await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
+
+    if (uid !== myNftConOwnerUid) {
+      throw new CustomError(
+        "mismatch current owner",
+        CustomErrorCode.MISMATCH_CURRENT_OWNER,
+        input
+      );
+    } // API를 보내는 유저가 일치하지 않는 경우
 
     const marketTradeLogs = await prismaClient.market_trade_log.findMany({
       take: 1,
       where: {
-        my_nft_con_uuid: myNftCon.uuid,
+        AND: [
+          {
+            my_nft_con_uuid: myNftCon.uuid,
+          },
+        ],
+        NOT: {
+          OR: [
+            { status: MarketTradeStatus.OFFER },
+            { status: MarketTradeStatus.OFFER_CANCEL },
+          ],
+        },
       },
       orderBy: {
         created_at: "desc",
@@ -454,7 +476,17 @@ export class MyNftConMutationResolver {
     const marketTradeLogs = await prismaClient.market_trade_log.findMany({
       take: 1,
       where: {
-        my_nft_con_uuid: myNftCon.uuid,
+        AND: [
+          {
+            my_nft_con_uuid: myNftCon.uuid,
+          },
+        ],
+        NOT: {
+          OR: [
+            { status: MarketTradeStatus.OFFER },
+            { status: MarketTradeStatus.OFFER_CANCEL },
+          ],
+        },
       },
       orderBy: {
         created_at: "desc",
@@ -550,6 +582,10 @@ export class MyNftConMutationResolver {
       ); // 구매자의 deposit이 부족한 경우
     }
 
+    const buyerSpend = total;
+    const sellerEarn = sub_total - commission;
+    const adminCommission = buyerSpend - sellerEarn;
+
     const safeTransferFromAbi = caver.abi.encodeFunctionCall(
       {
         name: "safeTransferFrom",
@@ -586,25 +622,60 @@ export class MyNftConMutationResolver {
       process.env.ADMIN_PRIVATE_KEY
     );
 
-    const { status, transactionHash } =
-      await this.transaction_mutation_resolver.send_raw_transaction(
-        { rlp: rawTransaction },
-        ctx
-      );
+    await prismaClient.deposit.update({
+      where: {
+        uuid: buyerDeposit.uuid,
+      },
+      data: {
+        avail_deposit_sum: buyerDeposit.avail_deposit_sum! - buyerSpend,
+        deposit_sum: buyerDeposit.deposit_sum! - buyerSpend,
+      },
+    }); // 구매자 deposit 선결제
 
-    if (status === TransactionStatus.FAILURE) {
+    let status: TransactionStatus, transactionHash: string;
+    try {
+      ({ status, transactionHash } =
+        await this.transaction_mutation_resolver.send_raw_transaction(
+          { rlp: rawTransaction },
+          ctx
+        )); // 트랜잭션 실행
+
+      if (status === TransactionStatus.FAILURE) {
+        await prismaClient.deposit.update({
+          where: {
+            uuid: buyerDeposit.uuid,
+          },
+          data: {
+            avail_deposit_sum: buyerDeposit.avail_deposit_sum,
+            deposit_sum: buyerDeposit.deposit_sum,
+          },
+        }); // 트랜잭션 실패시 구매자 deposit 원상 복구
+
+        throw new CustomError(
+          "transaction failed",
+          CustomErrorCode.TRANSACTION_FAILED,
+          { ...input, status, transactionHash }
+        );
+      } // transaction 실패할 경우
+    } catch (err) {
+      console.log("Error :>> ", err);
+
+      await prismaClient.deposit.update({
+        where: {
+          uuid: buyerDeposit.uuid,
+        },
+        data: {
+          avail_deposit_sum: buyerDeposit.avail_deposit_sum,
+          deposit_sum: buyerDeposit.deposit_sum,
+        },
+      }); // 트랜잭션 실패시 구매자 deposit 원상 복구
+
       throw new CustomError(
         "transaction failed",
         CustomErrorCode.TRANSACTION_FAILED,
-        { ...input, transactionHash }
+        input
       );
-    } // transaction 실패할 경우
-
-    const now = new Date();
-
-    const buyerSpend = total;
-    const sellerEarn = sub_total - commission;
-    const adminCommission = buyerSpend - sellerEarn;
+    }
 
     const sellerDeposit = await this.deposit_query_resolver.deposit(
       {
@@ -613,20 +684,20 @@ export class MyNftConMutationResolver {
       ctx
     );
 
-    // 구매자 deposit
-    const buyerDepositTransaction = prismaClient.deposit.update({
+    const now = new Date();
+
+    // 성공시 updated_at 현시점으로 변경
+    const updateBuyerDepositTransaction = prismaClient.deposit.update({
       where: {
         uuid: buyerDeposit.uuid,
       },
       data: {
-        avail_deposit_sum: buyerDeposit.avail_deposit_sum! - buyerSpend,
-        deposit_sum: buyerDeposit.deposit_sum! - buyerSpend,
         updated_at: now,
       },
     });
 
     // 판매자 deposit
-    const sellerDepositTransaction = prismaClient.deposit.update({
+    const updateSellerDepositTransaction = prismaClient.deposit.update({
       where: {
         uuid: sellerDeposit.uuid,
       },
@@ -637,30 +708,49 @@ export class MyNftConMutationResolver {
       },
     });
 
-    // market_trade_log
-    const marketTradeLogUuid = uuid();
-    const marketTradeLogTransaction = prismaClient.market_trade_log.create({
+    // 구매자 deposit_tx
+    const newDepositTxUuid = uuid();
+    const createBuyerDepositTxTransaction = prismaClient.deposit_tx.create({
       data: {
-        uuid: marketTradeLogUuid,
+        uuid: newDepositTxUuid,
         created_at: now,
         is_active: true,
         is_delete: false,
         updated_at: now,
-        status: MarketTradeStatus.PURCHASE,
-        sub_total,
-        commission,
-        total,
-        my_nft_con_uuid: myNftCon.uuid,
-        from: sellerUid,
-        to: buyerUid,
+        deposit_req_amnt: buyerSpend,
+        deposit_tx_ty: "DEPOSIT",
+        tx_approve_at: now,
+        tx_status: "USE_DEPOSIT_COMPLETE",
+        deposit_uuid: buyerDeposit.uuid,
+        member_uid: buyerUid,
       },
     });
 
+    // market_trade_log
+    const newMarketTradeLogUuid = uuid();
+    const createMarketTradeLogTransaction =
+      prismaClient.market_trade_log.create({
+        data: {
+          uuid: newMarketTradeLogUuid,
+          created_at: now,
+          is_active: true,
+          is_delete: false,
+          updated_at: now,
+          status: MarketTradeStatus.PURCHASE,
+          sub_total,
+          commission,
+          total,
+          my_nft_con_uuid: myNftCon.uuid,
+          from: sellerUid,
+          to: buyerUid,
+        },
+      });
+
     // admin_deposit
-    const adminDepositUuid = uuid();
-    const adminDepositTransaction = prismaClient.admin_deposit.create({
+    const newAdminDepositUuid = uuid();
+    const createAdminDepositTransaction = prismaClient.admin_deposit.create({
       data: {
-        uuid: adminDepositUuid,
+        uuid: newAdminDepositUuid,
         created_at: now,
         is_active: true,
         is_delete: false,
@@ -668,14 +758,14 @@ export class MyNftConMutationResolver {
         status: AdminDepositStatus.DEPOSIT,
         price: adminCommission,
         my_nft_con_uuid: myNftCon.uuid,
-        market_trade_log_uuid: marketTradeLogUuid,
+        market_trade_log_uuid: newMarketTradeLogUuid,
       },
     });
 
-    const marketTradeTxUuid = uuid();
-    const marketTradeTxTransaction = prismaClient.market_trade_tx.create({
+    const newMarketTradeTxUuid = uuid();
+    const createMarketTradeTxTransaction = prismaClient.market_trade_tx.create({
       data: {
-        uuid: marketTradeTxUuid,
+        uuid: newMarketTradeTxUuid,
         created_at: now,
         is_active: true,
         is_delete: false,
@@ -691,65 +781,90 @@ export class MyNftConMutationResolver {
         transaction_hash: transactionHash,
         my_nft_con_uuid: myNftCon.uuid,
         nft_con_edition_uuid: myNftCon.nft_con_edition_uuid,
-        market_trade_log_uuid: marketTradeLogUuid,
-        admin_deposit_uuid: adminDepositUuid,
+        market_trade_log_uuid: newMarketTradeLogUuid,
+        admin_deposit_uuid: newAdminDepositUuid,
       },
     });
 
-    // 기존 NFT 삭제 처리
-    const myNftConDeleteTransaction = prismaClient.my_nft_con.update({
+    // 구매자에게 기존 my_nft_con 권한을 양도 (member_uid 변경이 핵심)
+    const updateMyNftConTransaction = prismaClient.my_nft_con.update({
       where: { uuid: myNftCon.uuid },
       data: {
+        created_at: now,
+        updated_at: now,
+        deposit_at: now,
+        seller_id: sellerUid,
+        is_listing: false,
+        member_uid: buyerUid,
+      },
+    });
+
+    // 기존 유저의 my_nft_con을 삭제처리
+    const newMyNftConUuid = uuid();
+    const createPrevMyNftConTransaction = prismaClient.my_nft_con.create({
+      data: {
+        uuid: newMyNftConUuid,
+        created_at: myNftCon.created_at,
         is_active: false,
         is_delete: true,
         updated_at: now,
-      },
-    });
-
-    // 신규 NFT 생성
-    const newMyNftConUuid = uuid();
-    const newMyNftConTransaction = prismaClient.my_nft_con.create({
-      data: {
-        uuid: newMyNftConUuid,
-        created_at: now,
-        is_active: true,
-        is_delete: false,
-        updated_at: now,
-        deposit_at: now,
-        seller_id: myNftCon.member_uid,
+        deposit_at: myNftCon.deposit_at,
+        seller_id: myNftCon.seller_id,
         status: myNftCon.status,
-        member_uid: buyerUid,
+        member_uid: myNftCon.member_uid,
         nft_con_edition_uuid: myNftCon.nft_con_edition_uuid,
         is_burnt: myNftCon.is_burnt,
         token_id: myNftCon.token_id,
         contract_address: myNftCon.contract_address,
-        is_listing: false,
+        is_listing: myNftCon.is_listing,
       },
     });
 
     try {
       await prismaClient.$transaction([
-        buyerDepositTransaction,
-        sellerDepositTransaction,
-        marketTradeLogTransaction,
-        marketTradeTxTransaction,
-        myNftConDeleteTransaction,
-        newMyNftConTransaction,
-        adminDepositTransaction,
+        updateBuyerDepositTransaction,
+        updateSellerDepositTransaction,
+        createBuyerDepositTxTransaction,
+        createMarketTradeLogTransaction,
+        createMarketTradeTxTransaction,
+        updateMyNftConTransaction,
+        createPrevMyNftConTransaction,
+        createAdminDepositTransaction,
       ]);
     } catch (err) {
-      console.log(err);
+      console.log("Error :>> ", err);
+
+      const dynamoUuid = uuid();
+      await dynamoClient
+        .put({
+          TableName: `bankofwine-api-log-${process.env.STAGE}`,
+          Item: {
+            id: dynamoUuid,
+            createdAt: now.valueOf().toString(),
+            apiName: "purchase_list",
+            myNftConUuid: my_nft_con_uuid,
+            marketTradeLogUuid: marketTradeLogs[0].uuid,
+            buyerUid,
+            sellerUid,
+            total: Number(total),
+            subTotal: Number(sub_total),
+            commission: Number(commission),
+            buyerSpend: Number(buyerSpend),
+            sellerEarn: Number(sellerEarn),
+          },
+        })
+        .promise();
 
       throw new CustomError(
         "db transaction failed",
         CustomErrorCode.DB_TRANSACTION_FAILED,
-        input
+        { ...input, dynamoUuid }
       );
     }
 
     return prismaClient.my_nft_con.findUniqueOrThrow({
       where: {
-        uuid: newMyNftConUuid,
+        uuid: myNftCon.uuid,
       },
     });
   }

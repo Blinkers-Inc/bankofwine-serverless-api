@@ -13,7 +13,7 @@ import {
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
 import { MyNftConStatus } from "src/resolvers/databases/my-nft-con/dto/query/my-nft-con.dto";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
-import { LatestListingInfoOutput } from "src/resolvers/databases/nft-con-edition/dto/field/latest_listing_info.dto";
+import { LatestListingInfoOutput } from "src/resolvers/databases/nft-con-edition/dto/field/latest-listing-info.dto";
 import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-edition/dto/field/nft-con-edition-status.dto";
 import { NftConInfoQueryResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.query.resolver";
 import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query.resolver";
@@ -44,7 +44,7 @@ export class NftConEditionFieldResolver {
     @Root() { uuid }: Nft_con_edition,
     @Ctx() { prismaClient }: IContext
   ): Promise<My_nft_con | null> {
-    const myNftCons = await prismaClient.my_nft_con.findMany({
+    const myNftCon = await prismaClient.my_nft_con.findFirst({
       take: 1,
       where: {
         is_active: true,
@@ -55,11 +55,11 @@ export class NftConEditionFieldResolver {
       },
     });
 
-    if (!myNftCons.length) {
+    if (!myNftCon) {
       return null;
     }
 
-    return myNftCons[0];
+    return myNftCon;
   }
 
   @FieldResolver(() => String)
@@ -147,21 +147,21 @@ export class NftConEditionFieldResolver {
     @Ctx() ctx: IContext
   ): Promise<NftConEditionPurchasableStatus> {
     const { status } = root;
-    const my_nft_con = await this.my_nft_con(root, ctx);
+    const myNftCon = await this.my_nft_con(root, ctx);
 
     if (status === "AVAILABLE") {
       return NftConEditionPurchasableStatus.PURCHASABLE;
     }
 
-    if (my_nft_con && my_nft_con.is_listing) {
+    if (myNftCon && myNftCon.is_listing) {
       return NftConEditionPurchasableStatus.PURCHASABLE;
     }
 
     if (
-      my_nft_con &&
-      (my_nft_con.status === MyNftConStatus.REDEEM_PENDING ||
-        my_nft_con.status === MyNftConStatus.REDEEM_COMPLETE ||
-        my_nft_con.status === MyNftConStatus.MNFT_APPLIED)
+      myNftCon &&
+      (myNftCon.status === MyNftConStatus.REDEEM_PENDING ||
+        myNftCon.status === MyNftConStatus.REDEEM_COMPLETE ||
+        myNftCon.status === MyNftConStatus.MNFT_APPLIED)
     ) {
       return NftConEditionPurchasableStatus.REDEEMED;
     }
@@ -229,9 +229,9 @@ export class NftConEditionFieldResolver {
     @Root() root: Nft_con_edition,
     @Ctx() ctx: IContext
   ): Promise<Market_trade_log[]> {
-    const my_nft_con = await this.my_nft_con(root, ctx);
+    const currentMyNftCon = await this.my_nft_con(root, ctx);
 
-    if (!my_nft_con) {
+    if (!currentMyNftCon) {
       return [];
     }
 
@@ -244,7 +244,7 @@ export class NftConEditionFieldResolver {
       nft_con_edition_uuid,
       member_uid,
       status,
-    } = my_nft_con;
+    } = currentMyNftCon;
 
     const marketTradeLogs = await ctx.prismaClient.market_trade_log.findMany({
       where: {
@@ -261,19 +261,26 @@ export class NftConEditionFieldResolver {
       },
     });
 
+    const mintMyNftCon = await ctx.prismaClient.my_nft_con.findFirstOrThrow({
+      where: {
+        nft_con_edition_uuid,
+      },
+      orderBy: { created_at: "asc" },
+    });
+
     const mintLog: Market_trade_log = {
       uuid: nft_con_edition_uuid,
-      created_at,
+      created_at: mintMyNftCon.created_at,
       is_active,
       is_delete,
-      updated_at: created_at,
+      updated_at: mintMyNftCon.created_at,
       status: "MINT",
       sub_total: price,
       commission: BigInt(0),
       total: price,
       my_nft_con_uuid,
       from: BOW_NICKNAME,
-      to: member_uid,
+      to: mintMyNftCon.member_uid,
     };
 
     const marketTradeLogsWithMint = [...marketTradeLogs, mintLog];
@@ -290,7 +297,7 @@ export class NftConEditionFieldResolver {
         created_at: updated_at,
         is_active,
         is_delete,
-        updated_at: created_at,
+        updated_at,
         status: "REDEEM",
         sub_total: BigInt(0),
         commission: BigInt(0),
@@ -321,9 +328,9 @@ export class NftConEditionFieldResolver {
       return Number(price);
     } // 민팅 이후 판매 없는 경우
 
-    const my_nft_con = await this.my_nft_con(root, ctx);
+    const myNftCon = await this.my_nft_con(root, ctx);
 
-    if (!my_nft_con) {
+    if (!myNftCon) {
       return Number(price);
     } // my_nft_con 없는 경우
 

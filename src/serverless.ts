@@ -8,6 +8,7 @@ import {
   ApolloServerPluginUsageReporting,
   ApolloServerPluginCacheControl,
 } from "apollo-server-core";
+
 import { ApolloServer } from "apollo-server-lambda";
 import { ApolloServerPlugin } from "apollo-server-plugin-base";
 import ApolloServerPluginResponseCache from "apollo-server-plugin-response-cache";
@@ -29,6 +30,7 @@ let plugins = [
   ApolloServerPluginResponseCache(), // @CacheControl decorator 사용 가능
   ApolloServerPluginCacheControl({ defaultMaxAge: 10 }), // 캐시 세팅
   ApolloServerPluginUsageReporting({
+    sendReportsImmediately: true,
     sendHeaders: { all: true },
     sendVariableValues: { all: true }, // apollo-studio 에 headers, values 데이터 포함하여 리포트
   }),
@@ -61,6 +63,8 @@ const server = new ApolloServer({
   plugins,
   schema,
   formatError: (err) => {
+    console.log("Error :>> ", err);
+
     const { message, path } = err;
     const { code, exception } = err.extensions;
     const { errorCode, data } = exception;

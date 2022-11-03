@@ -3,7 +3,6 @@ import { Container } from "typedi";
 
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
-import { BannerQueryResolver } from "src/resolvers/databases/banner/banner.query.resolver";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
 import { MemberFieldResolver } from "src/resolvers/databases/member/member.field.resolver";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
@@ -13,6 +12,7 @@ import { MyNftConFieldResolver } from "src/resolvers/databases/my-nft-con/my-nft
 import { MyNftConMutationResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.mutation.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
 import { NftConEditionFieldResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.field.resolver";
+import { NftConEditionMutationResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.mutation.resolver";
 import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
 import { NftConInfoFieldResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.field.resolver";
 import { NftConInfoQueryResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.query.resolver";
@@ -26,6 +26,7 @@ import { MigrationQueryResolver } from "src/resolvers/migration/migration.query.
 import { TradeLogFieldResolver } from "src/resolvers/trade-log/trade-log.field.resolver";
 import { SampleResolver } from "src/resolvers/transaction/sample.query.resolver";
 import { TransactionMutationResolver } from "src/resolvers/transaction/transaction.mutation.resolver";
+import { VaultRelatedEditionFieldResolver } from "src/resolvers/vault/vault.field.resolver";
 import { VaultQueryResolver } from "src/resolvers/vault/vault.query.resolver";
 
 export const authChecker = ({ context }: { context: IContext }) => {
@@ -52,7 +53,6 @@ export const schema = buildSchemaSync({
   authChecker,
   container: Container,
   resolvers: [
-    BannerQueryResolver,
     DepositQueryResolver,
     MemberQueryResolver,
     MigrationQueryResolver,
@@ -67,6 +67,7 @@ export const schema = buildSchemaSync({
     MetadataMutationResolver,
     MigrationMutationResolver,
     MyNftConMutationResolver,
+    NftConEditionMutationResolver,
     NftConMetadataMutationResolver,
     TransactionMutationResolver,
 
@@ -77,6 +78,7 @@ export const schema = buildSchemaSync({
     NftConInfoFieldResolver,
     NftConMetadataFieldResolver,
     TradeLogFieldResolver,
+    VaultRelatedEditionFieldResolver,
 
     SampleResolver,
   ],

@@ -16,16 +16,25 @@ export class MyNftConFieldResolver {
     private nft_con_edition_query_resolver: NftConEditionQueryResolver
   ) {}
 
-  @FieldResolver(() => Member, { description: "최초 민팅한 유저" })
+  @FieldResolver(() => Member, {
+    description: "최초 민팅한 유저, 가장 오래된 my_nft_con 을 통해 검증",
+  })
   async minting_member(
-    @Root() { member_uid }: My_nft_con,
+    @Root() { nft_con_edition_uuid }: My_nft_con,
     @Ctx() ctx: IContext
   ): Promise<Member> {
+    const { member_uid } = await ctx.prismaClient.my_nft_con.findFirstOrThrow({
+      where: {
+        nft_con_edition_uuid,
+      },
+      orderBy: { created_at: "asc" },
+    });
+
     return this.member_query_resolver.member({ member_uid }, ctx);
   }
 
   @FieldResolver(() => Member, {
-    description: "현재 소유주, 거래 발생시 current_owner_uid 가 기준",
+    description: "현재 소유주",
   })
   async current_owner(
     @Root() { member_uid }: My_nft_con,

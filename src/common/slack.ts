@@ -1,7 +1,6 @@
-import axios from "axios";
+import { IncomingWebhook } from "@slack/webhook";
 
-const TEST_URL =
-  "https://hooks.slack.com/services/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";
+const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL!);
 
 export const sendCustomError = async (input: {
   code?: string;
@@ -29,9 +28,7 @@ export const sendCustomError = async (input: {
         short: false,
       },
       {
-        title: `message : ${
-          message ? JSON.stringify(message).slice(0, 255) : "none"
-        }`,
+        title: `message : ${message ? JSON.stringify(message) : "none"}`,
         short: false,
       },
       {
@@ -42,7 +39,7 @@ export const sendCustomError = async (input: {
   };
 
   try {
-    await axios.post(TEST_URL, slackMessage);
+    await webhook.send(slackMessage);
     console.log("슬랙 전송 완료");
   } catch (err) {
     console.log("err", err);

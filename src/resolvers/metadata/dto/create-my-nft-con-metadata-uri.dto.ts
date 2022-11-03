@@ -17,6 +17,9 @@ export class CreateMyNftConMetadataURIInput {
 
   @Field()
   token_id: string;
+
+  @Field({ nullable: true })
+  nft_con_edition_uuid?: string;
 }
 
 @InputType("CreateMyMnftMetadataURIInput")

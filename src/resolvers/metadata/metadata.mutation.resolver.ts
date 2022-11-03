@@ -37,21 +37,34 @@ export class MetadataMutationResolver {
 
   @Mutation(() => CreateMetadataURIOutput)
   async create_my_nft_con_metadata_uri(
-    @Arg("input") { my_nft_con_uuid, token_id }: CreateMyNftConMetadataURIInput,
+    @Arg("input")
+    {
+      my_nft_con_uuid,
+      token_id,
+      nft_con_edition_uuid,
+    }: CreateMyNftConMetadataURIInput,
     @Ctx() ctx: IContext
   ): Promise<CreateMetadataURIOutput> {
-    const { nft_con_edition_uuid } =
-      await this.my_nft_con_query_resolver.my_nft_con(
-        {
-          uuid: my_nft_con_uuid,
-        },
-        ctx
-      );
+    let nftConEditionUuid: string;
+
+    if (nft_con_edition_uuid) {
+      nftConEditionUuid = nft_con_edition_uuid;
+    } else {
+      const { nft_con_edition_uuid: editionUuid } =
+        await this.my_nft_con_query_resolver.my_nft_con(
+          {
+            uuid: my_nft_con_uuid,
+          },
+          ctx
+        );
+
+      nftConEditionUuid = editionUuid;
+    }
 
     const { edition_no, nft_con_uuid } =
       await this.nft_con_edition_query_resolver.nft_con_edition(
         {
-          uuid: nft_con_edition_uuid,
+          uuid: nftConEditionUuid,
         },
         ctx
       );
