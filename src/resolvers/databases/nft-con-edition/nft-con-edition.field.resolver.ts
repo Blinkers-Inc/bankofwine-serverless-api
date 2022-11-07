@@ -188,14 +188,14 @@ export class NftConEditionFieldResolver {
       };
     }
 
-    const my_nft_con = await this.my_nft_con(root, ctx);
+    const myNftCon = await this.my_nft_con(root, ctx);
 
-    if (my_nft_con && my_nft_con.is_listing) {
-      const [{ status, sub_total, commission, total, created_at }] =
-        await ctx.prismaClient.market_trade_log.findMany({
-          take: 1,
+    if (myNftCon && myNftCon.is_listing) {
+      const { status, sub_total, commission, total, created_at } =
+        await ctx.prismaClient.market_trade_log.findFirstOrThrow({
           where: {
-            my_nft_con_uuid: my_nft_con.uuid,
+            is_active: true,
+            my_nft_con_uuid: myNftCon.uuid,
           },
           orderBy: {
             created_at: "desc",
@@ -237,7 +237,6 @@ export class NftConEditionFieldResolver {
 
     const {
       uuid: my_nft_con_uuid,
-      created_at,
       updated_at,
       is_active,
       is_delete,
@@ -248,6 +247,7 @@ export class NftConEditionFieldResolver {
 
     const marketTradeLogs = await ctx.prismaClient.market_trade_log.findMany({
       where: {
+        is_active: true,
         my_nft_con_uuid,
       },
       orderBy: {

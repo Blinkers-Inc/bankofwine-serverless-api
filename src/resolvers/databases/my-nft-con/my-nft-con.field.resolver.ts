@@ -56,18 +56,25 @@ export class MyNftConFieldResolver {
     );
   }
 
-  @FieldResolver(() => [My_mnft], { defaultValue: [] })
+  @FieldResolver(() => [My_mnft])
   async my_mnfts(
     @Root()
     { member_uid, uuid }: My_nft_con,
     @Arg("input")
-    { current_owner_uid }: MyMnftOfMyNftConInput,
+    { member_uid: memberUidInput }: MyMnftOfMyNftConInput,
     @Ctx() { prismaClient }: IContext
   ): Promise<My_mnft[]> {
-    const currentMemberUid = current_owner_uid ?? member_uid;
+    const memberUid = memberUidInput ?? member_uid;
 
     return prismaClient.my_mnft.findMany({
-      where: { mynft_uuid: uuid, member_uid: currentMemberUid },
+      orderBy: {
+        created_at: "asc",
+      },
+      where: {
+        is_active: true,
+        mynft_uuid: uuid,
+        member_uid: memberUid,
+      },
     });
   }
 

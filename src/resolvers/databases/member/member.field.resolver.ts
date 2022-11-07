@@ -1,7 +1,7 @@
 import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
+import { v4 as uuid } from "uuid";
 
-import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
 import {
   Deposit,
@@ -46,17 +46,42 @@ export class MemberFieldResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<Deposit> {
     const { uid: member_uid } = input;
-    const deposits = await prismaClient.deposit.findMany({
+    const deposit = await prismaClient.deposit.findFirst({
+      orderBy: {
+        updated_at: "desc",
+      },
       where: {
+        is_active: true,
         member_uid,
       },
     });
 
-    if (!deposits.length) {
-      throw new CustomError("invalid uid", CustomErrorCode.INVALID_UID, input);
+    if (!deposit) {
+      const newDepositUuid = uuid();
+      const now = new Date();
+      const zeroBigInt = BigInt(0);
+
+      await prismaClient.deposit.create({
+        data: {
+          uuid: newDepositUuid,
+          created_at: now,
+          is_active: true,
+          is_delete: false,
+          updated_at: now,
+          avail_deposit_sum: zeroBigInt,
+          deposit_sum: zeroBigInt,
+          pending_deposit_sum: zeroBigInt,
+          pending_withdraw_sum: zeroBigInt,
+          member_uid,
+        },
+      });
+
+      return prismaClient.deposit.findUniqueOrThrow({
+        where: { uuid: newDepositUuid },
+      });
     }
 
-    return deposits[0];
+    return deposit;
   }
 
   @FieldResolver(() => [My_nft_con])
@@ -118,6 +143,7 @@ export class MemberFieldResolver {
     const tradeTxs = await prismaClient.trade_tx.findMany({
       take: 10_000,
       where: {
+        is_active: true,
         member_uid: uid,
       },
       orderBy: {
@@ -137,7 +163,7 @@ export class MemberFieldResolver {
 
     const marketTradeTxs = await prismaClient.market_trade_tx.findMany({
       take: 10_000,
-      where: { OR: [{ buyer_uid: uid }, { seller_uid: uid }] },
+      where: { is_active: true, OR: [{ buyer_uid: uid }, { seller_uid: uid }] },
       orderBy: { created_at: "desc" },
     });
 

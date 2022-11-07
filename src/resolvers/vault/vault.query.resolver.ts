@@ -230,7 +230,7 @@ export class VaultQueryResolver {
           acc.description = metadata.description;
         }
 
-        if (cur.trait_type === "Description_kr") {
+        if (cur.trait_type === "Description_KR") {
           acc.description_kr = cur.string_value ?? "";
         }
 

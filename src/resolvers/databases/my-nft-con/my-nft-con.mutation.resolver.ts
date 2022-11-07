@@ -129,6 +129,7 @@ export class MyNftConMutationResolver {
       where: {
         AND: [
           {
+            is_active: true,
             my_nft_con_uuid: myNftCon.uuid,
           },
         ],
@@ -331,6 +332,7 @@ export class MyNftConMutationResolver {
       where: {
         AND: [
           {
+            is_active: true,
             my_nft_con_uuid: myNftCon.uuid,
           },
         ],
@@ -478,6 +480,7 @@ export class MyNftConMutationResolver {
       where: {
         AND: [
           {
+            is_active: true,
             my_nft_con_uuid: myNftCon.uuid,
           },
         ],
@@ -627,8 +630,8 @@ export class MyNftConMutationResolver {
         uuid: buyerDeposit.uuid,
       },
       data: {
-        avail_deposit_sum: buyerDeposit.avail_deposit_sum! - buyerSpend,
-        deposit_sum: buyerDeposit.deposit_sum! - buyerSpend,
+        avail_deposit_sum: buyerDeposit.avail_deposit_sum - buyerSpend,
+        deposit_sum: buyerDeposit.deposit_sum - buyerSpend,
       },
     }); // 구매자 deposit 선결제
 
@@ -703,8 +706,8 @@ export class MyNftConMutationResolver {
       },
       data: {
         updated_at: now,
-        avail_deposit_sum: sellerDeposit.avail_deposit_sum! + sellerEarn,
-        deposit_sum: sellerDeposit.deposit_sum! + sellerEarn,
+        avail_deposit_sum: sellerDeposit.avail_deposit_sum + sellerEarn,
+        deposit_sum: sellerDeposit.deposit_sum + sellerEarn,
       },
     });
 

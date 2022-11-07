@@ -25,6 +25,9 @@ export class MemberQueryResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<Member[]> {
     return prismaClient.member.findMany({
+      where: {
+        is_active: true,
+      },
       skip,
       take,
     });

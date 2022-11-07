@@ -4,6 +4,7 @@ import { Container } from "typedi";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
+import { MarketTradeLogFieldResolver } from "src/resolvers/databases/market-trade-log/market-trade-log.field.resolver";
 import { MemberFieldResolver } from "src/resolvers/databases/member/member.field.resolver";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
 import { MyMnftFieldResolver } from "src/resolvers/databases/my-mnft/my-mnft.field.resolver";
@@ -71,6 +72,7 @@ export const schema = buildSchemaSync({
     NftConMetadataMutationResolver,
     TransactionMutationResolver,
 
+    MarketTradeLogFieldResolver,
     MemberFieldResolver,
     MyNftConFieldResolver,
     MyMnftFieldResolver,

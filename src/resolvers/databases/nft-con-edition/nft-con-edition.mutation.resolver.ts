@@ -58,6 +58,16 @@ export class NftConEditionMutationResolver {
       ); // nft_con_edition 상태가 유효하지 않은 경우
     }
 
+    const now = new Date();
+
+    if (now.valueOf() < nftConEdition.minting_at.valueOf()) {
+      throw new CustomError(
+        "invalid date",
+        CustomErrorCode.INVALID_DATE,
+        input
+      ); // 민팅 날짜 이전에 구매를 시도할 경우
+    }
+
     const buyer = await this.member_query_resolver.member(
       { member_uid: buyerUid },
       ctx
@@ -110,9 +120,8 @@ export class NftConEditionMutationResolver {
         uuid: buyerDeposit.uuid,
       },
       data: {
-        avail_deposit_sum:
-          buyerDeposit.avail_deposit_sum! - nftConEdition.price,
-        deposit_sum: buyerDeposit.deposit_sum! - nftConEdition.price,
+        avail_deposit_sum: buyerDeposit.avail_deposit_sum - nftConEdition.price,
+        deposit_sum: buyerDeposit.deposit_sum - nftConEdition.price,
       },
     }); // 구매자 deposit 선결제
 
@@ -195,8 +204,6 @@ export class NftConEditionMutationResolver {
         },
       });
     }
-
-    const now = new Date();
 
     const updateNftConEditionTransaction = prismaClient.nft_con_edition.update({
       where: { uuid: nftConEdition.uuid },

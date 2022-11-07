@@ -25,6 +25,9 @@ export class NftConInfoQueryResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<Nft_con_info[]> {
     return prismaClient.nft_con_info.findMany({
+      where: {
+        is_active: true,
+      },
       skip,
       take,
     });

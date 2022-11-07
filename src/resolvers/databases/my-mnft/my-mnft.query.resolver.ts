@@ -27,7 +27,10 @@ export class MyMnftQueryResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<My_mnft[]> {
     return prismaClient.my_mnft.findMany({
-      where: { member_uid },
+      where: { is_active: true, member_uid },
+      orderBy: {
+        created_at: "desc",
+      },
     });
   }
 }

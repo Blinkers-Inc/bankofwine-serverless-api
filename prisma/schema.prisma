@@ -212,12 +212,12 @@ model deposit {
   is_active            Boolean
   is_delete            Boolean
   updated_at           DateTime     @db.Timestamp(6)
-  avail_deposit_sum    BigInt?
-  deposit_sum          BigInt?
-  pending_deposit_sum  BigInt?
-  pending_withdraw_sum BigInt?
-  member_uid           String?      @db.VarChar(255)
-  member               member?      @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkmrmrrvmgoi29xf0ccackh6j4a")
+  avail_deposit_sum    BigInt
+  deposit_sum          BigInt
+  pending_deposit_sum  BigInt
+  pending_withdraw_sum BigInt
+  member_uid           String       @db.VarChar(255)
+  member               member       @relation(fields: [member_uid], references: [uid], onDelete: NoAction, onUpdate: NoAction, map: "fkmrmrrvmgoi29xf0ccackh6j4a")
   deposit_tx           deposit_tx[]
   trade_tx             trade_tx[]
 }

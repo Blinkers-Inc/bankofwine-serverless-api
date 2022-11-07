@@ -13,7 +13,7 @@ export class NftConMetadataFieldResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<Nft_con_metadata_attribute[]> {
     return prismaClient.nft_con_metadata_attribute.findMany({
-      where: { nft_con_metadata_uuid },
+      where: { nft_con_metadata_uuid, is_active: true },
     });
   }
 }

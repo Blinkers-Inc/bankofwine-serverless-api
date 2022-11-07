@@ -42,6 +42,7 @@ export class NftConEditionQueryResolver {
   ): Promise<Nft_con_edition[]> {
     return prismaClient.nft_con_edition.findMany({
       where: {
+        is_active: true,
         nft_con_uuid,
       },
       orderBy: {
@@ -163,7 +164,7 @@ export class NftConEditionQueryResolver {
         minting_price: Number(cur.price),
         purchasable_amount: purchasableAmounts[index],
         purchasable_editions: purchasableEditions[index],
-        img_url: nft_con_info.gif_url!,
+        img_url: nft_con_info.img_url!,
         tier: nft_con_info.tier as Tier,
         short_name: nft_con_info.short_name,
         ...vaultDetail,
