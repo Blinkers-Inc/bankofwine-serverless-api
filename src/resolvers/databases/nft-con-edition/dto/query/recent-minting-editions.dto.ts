@@ -29,6 +29,9 @@ export class RecentMintingEdition extends VaultDetail {
   img_url: string;
 
   @Field()
+  static_diagonal_img_url: string;
+
+  @Field()
   short_name: string;
 
   @Field(() => Tier)

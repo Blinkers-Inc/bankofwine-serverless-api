@@ -16,6 +16,9 @@ export class NftConInfoQueryResolver {
   ): Promise<Nft_con_info> {
     return prismaClient.nft_con_info.findUniqueOrThrow({
       where: { uuid },
+      include: {
+        metadata: true,
+      },
     });
   }
 
@@ -27,6 +30,9 @@ export class NftConInfoQueryResolver {
     return prismaClient.nft_con_info.findMany({
       where: {
         is_active: true,
+      },
+      include: {
+        metadata: true,
       },
       skip,
       take,

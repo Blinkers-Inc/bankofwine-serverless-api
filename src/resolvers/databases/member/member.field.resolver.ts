@@ -19,33 +19,23 @@ import { MyMnftFieldResolver } from "src/resolvers/databases/my-mnft/my-mnft.fie
 import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
 import { MyNftConFieldResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.field.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
-import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query.resolver";
 
 @Service()
 @Resolver(Member)
 export class MemberFieldResolver {
   constructor(
-    private wallet_query_resolver: WalletQueryResolver,
-    private my_nft_con_query_resolver: MyNftConQueryResolver,
     private my_mnft_query_resolver: MyMnftQueryResolver,
+    private my_nft_con_query_resolver: MyNftConQueryResolver,
+
     private my_nft_con_field_resolver: MyNftConFieldResolver,
     private my_mnft_field_resolver: MyMnftFieldResolver
   ) {}
 
-  @FieldResolver(() => [Wallet])
-  async wallets(
-    @Root() { uid: member_uid }: Member,
-    @Ctx() ctx: IContext
-  ): Promise<Wallet[]> {
-    return this.wallet_query_resolver.wallets({ member_uid }, ctx);
-  }
-
-  @FieldResolver(() => Deposit)
+  @FieldResolver(() => Deposit, { name: "deposit" })
   async deposit(
-    @Root() input: Member,
+    @Root() { uid: member_uid }: Member,
     @Ctx() { prismaClient }: IContext
   ): Promise<Deposit> {
-    const { uid: member_uid } = input;
     const deposit = await prismaClient.deposit.findFirst({
       orderBy: {
         updated_at: "desc",
@@ -120,6 +110,9 @@ export class MemberFieldResolver {
         this.my_mnft_field_resolver.token_owner_address(myMnft, ctx)
       )
     );
+
+    console.log("myNftOwnerTokenAddresses", myNftOwnerTokenAddresses);
+    console.log("myMnftOwnerTokenAddresses", myMnftOwnerTokenAddresses);
 
     const rawAddresses = [
       ...new Set([...myNftOwnerTokenAddresses, ...myMnftOwnerTokenAddresses]),

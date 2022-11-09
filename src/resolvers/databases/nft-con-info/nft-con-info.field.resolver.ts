@@ -18,14 +18,17 @@ export class NftConInfoFieldResolver {
 
   @FieldResolver(() => Nft_con_metadata, { nullable: true })
   async metadata(
-    @Root() { uuid: nft_con_uuid }: Nft_con_info,
+    @Root() { uuid: nft_con_uuid, metadata }: Nft_con_info,
     @Ctx() ctx: IContext
   ): Promise<Nft_con_metadata | null> {
-    return this.nft_con_metadata_query_resolver.nft_con_metadata(
-      {
-        nft_con_uuid,
-      },
-      ctx
+    return (
+      metadata ??
+      this.nft_con_metadata_query_resolver.nft_con_metadata(
+        {
+          nft_con_uuid,
+        },
+        ctx
+      )
     );
   }
 

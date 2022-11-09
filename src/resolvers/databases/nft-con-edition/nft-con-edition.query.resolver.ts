@@ -32,6 +32,9 @@ export class NftConEditionQueryResolver {
   ): Promise<Nft_con_edition> {
     return prismaClient.nft_con_edition.findUniqueOrThrow({
       where: { uuid },
+      include: {
+        nft_con_info: true,
+      },
     });
   }
 
@@ -41,6 +44,9 @@ export class NftConEditionQueryResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<Nft_con_edition[]> {
     return prismaClient.nft_con_edition.findMany({
+      include: {
+        nft_con_info: true,
+      },
       where: {
         is_active: true,
         nft_con_uuid,
@@ -165,6 +171,7 @@ export class NftConEditionQueryResolver {
         purchasable_amount: purchasableAmounts[index],
         purchasable_editions: purchasableEditions[index],
         img_url: nft_con_info.img_url!,
+        static_diagonal_img_url: nft_con_info.static_diagonal_img_url!,
         tier: nft_con_info.tier as Tier,
         short_name: nft_con_info.short_name,
         ...vaultDetail,
@@ -212,9 +219,11 @@ export class NftConEditionQueryResolver {
     );
 
     const filtered = totalEditions.filter(
-      (_, index) =>
-        statusByEditions[index] === NftConEditionPurchasableStatus.PURCHASABLE
-    ); // 구매가능한 NFT 만 필터링
+      (edition, index) =>
+        statusByEditions[index] ===
+          NftConEditionPurchasableStatus.PURCHASABLE &&
+        edition.nft_con_info.is_active === true
+    ); // 구매가능한 NFT & nft_con_info 가 is_active 인 edition 만 필터
 
     const latestListingInfoList = await Promise.all(
       filtered.map((edition) =>

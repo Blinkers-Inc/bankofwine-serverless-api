@@ -4,29 +4,32 @@ import { Service } from "typedi";
 import { BOW_NICKNAME } from "src/common/constant";
 import { IContext } from "src/common/interfaces/context";
 import { Market_trade_log } from "src/prisma";
+import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
 import { WalletQueryResolver } from "src/resolvers/databases/wallet/wallet.query.resolver";
 
 @Service()
 @Resolver(Market_trade_log)
 export class MarketTradeLogFieldResolver {
-  constructor(private wallet_query_resolver: WalletQueryResolver) {}
+  constructor(
+    private member_query_resolver: MemberQueryResolver,
+    private wallet_query_resolver: WalletQueryResolver
+  ) {}
 
   @FieldResolver(() => String, { nullable: true })
   async from_nickname(
     @Root() { from }: Market_trade_log,
-    @Ctx() { prismaClient }: IContext
+    @Ctx() ctx: IContext
   ): Promise<string | null> {
     if (!from || from === BOW_NICKNAME) {
       return from;
     }
 
-    const { nick_nm } = await prismaClient.member.findUniqueOrThrow({
-      where: {
-        uid: from,
-      },
-    });
+    const { nick_nm } = await this.member_query_resolver.member(
+      { member_uid: from },
+      ctx
+    );
 
-    return nick_nm;
+    return nick_nm ?? null;
   }
 
   @FieldResolver(() => String, { nullable: true })
@@ -59,19 +62,18 @@ export class MarketTradeLogFieldResolver {
   @FieldResolver(() => String, { nullable: true })
   async to_nickname(
     @Root() { to }: Market_trade_log,
-    @Ctx() { prismaClient }: IContext
+    @Ctx() ctx: IContext
   ): Promise<string | null> {
     if (!to || to === BOW_NICKNAME) {
       return to ?? null;
     }
 
-    const { nick_nm } = await prismaClient.member.findUniqueOrThrow({
-      where: {
-        uid: to,
-      },
-    });
+    const { nick_nm } = await this.member_query_resolver.member(
+      { member_uid: to },
+      ctx
+    );
 
-    return nick_nm;
+    return nick_nm ?? null;
   }
 
   @FieldResolver(() => String, { nullable: true })

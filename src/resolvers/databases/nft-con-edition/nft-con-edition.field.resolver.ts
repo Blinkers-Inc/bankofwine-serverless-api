@@ -30,12 +30,12 @@ export class NftConEditionFieldResolver {
 
   @FieldResolver(() => Nft_con_info)
   async nft_con_info(
-    @Root() { nft_con_uuid }: Nft_con_edition,
+    @Root() { nft_con_uuid, nft_con_info }: Nft_con_edition,
     @Ctx() ctx: IContext
   ): Promise<Nft_con_info> {
-    return await this.nft_con_info_query_resolver.nft_con_info(
-      { uuid: nft_con_uuid },
-      ctx
+    return (
+      nft_con_info ??
+      this.nft_con_info_query_resolver.nft_con_info({ uuid: nft_con_uuid }, ctx)
     );
   }
 
@@ -45,7 +45,6 @@ export class NftConEditionFieldResolver {
     @Ctx() { prismaClient }: IContext
   ): Promise<My_nft_con | null> {
     const myNftCon = await prismaClient.my_nft_con.findFirst({
-      take: 1,
       where: {
         is_active: true,
         nft_con_edition_uuid: uuid,
@@ -151,11 +150,7 @@ export class NftConEditionFieldResolver {
 
     if (status === "AVAILABLE") {
       return NftConEditionPurchasableStatus.PURCHASABLE;
-    }
-
-    if (myNftCon && myNftCon.is_listing) {
-      return NftConEditionPurchasableStatus.PURCHASABLE;
-    }
+    } // edition 상태가 AVAILABLE 인 경우
 
     if (
       myNftCon &&
@@ -164,7 +159,15 @@ export class NftConEditionFieldResolver {
         myNftCon.status === MyNftConStatus.MNFT_APPLIED)
     ) {
       return NftConEditionPurchasableStatus.REDEEMED;
-    }
+    } // myNftCon 상태가 REDEEM 연관 상태인경우
+
+    if (myNftCon && myNftCon.is_burnt) {
+      return NftConEditionPurchasableStatus.REDEEMED;
+    } // 블랙홀에 넣기만 하고 현물교환신청(REDEEM) 하지 않은 경우
+
+    if (myNftCon && myNftCon.is_listing) {
+      return NftConEditionPurchasableStatus.PURCHASABLE;
+    } // 위 경우를 제외한 is_listing이 true인 상태
 
     return NftConEditionPurchasableStatus.SOLD;
   }
@@ -243,6 +246,7 @@ export class NftConEditionFieldResolver {
       nft_con_edition_uuid,
       member_uid,
       status,
+      is_burnt,
     } = currentMyNftCon;
 
     const marketTradeLogs = await ctx.prismaClient.market_trade_log.findMany({
@@ -291,7 +295,7 @@ export class NftConEditionFieldResolver {
       MyNftConStatus.REDEEM_PENDING,
     ];
 
-    if (redeemStatus.includes(status as MyNftConStatus)) {
+    if (is_burnt || redeemStatus.includes(status as MyNftConStatus)) {
       const redeemLog: Market_trade_log = {
         uuid: nft_con_edition_uuid,
         created_at: updated_at,

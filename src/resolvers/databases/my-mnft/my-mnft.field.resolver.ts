@@ -17,28 +17,34 @@ export class MyMnftFieldResolver {
 
   @FieldResolver(() => My_nft_con)
   async my_nft_con(
-    @Root() { mynft_uuid }: My_mnft,
+    @Root() { mynft_uuid, my_nft_con }: My_mnft,
     @Ctx() ctx: IContext
   ): Promise<My_nft_con> {
-    return this.my_nft_con_query_resolver.my_nft_con({ uuid: mynft_uuid }, ctx);
+    return (
+      my_nft_con ??
+      this.my_nft_con_query_resolver.my_nft_con({ uuid: mynft_uuid }, ctx)
+    );
   }
 
   @FieldResolver(() => Member)
   async member(
-    @Root() { member_uid }: My_mnft,
+    @Root() { member_uid, member }: My_mnft,
     @Ctx() ctx: IContext
   ): Promise<Member> {
-    return this.member_query_resolver.member({ member_uid }, ctx);
+    return member ?? this.member_query_resolver.member({ member_uid }, ctx);
   }
 
   @FieldResolver(() => [Participant], { defaultValue: [] })
   async participants(
-    @Root() { uuid }: My_mnft,
+    @Root() { uuid, participant }: My_mnft,
     @Ctx() { prismaClient }: IContext
   ): Promise<Participant[]> {
-    return await prismaClient.participant.findMany({
-      where: { my_mnft_uuid: uuid },
-    });
+    return (
+      participant ??
+      prismaClient.participant.findMany({
+        where: { my_mnft_uuid: uuid },
+      })
+    );
   }
 
   @FieldResolver(() => String, { nullable: true })

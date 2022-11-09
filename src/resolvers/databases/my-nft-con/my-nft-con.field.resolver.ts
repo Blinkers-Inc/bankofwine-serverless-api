@@ -1,4 +1,4 @@
-import { Arg, Ctx, FieldResolver, Resolver, Root } from "type-graphql";
+import { Arg, Ctx, FieldResolver, Int, Resolver, Root } from "type-graphql";
 import { Service } from "typedi";
 
 import { ERC721_ABI } from "src/abi/ERC721";
@@ -43,16 +43,17 @@ export class MyNftConFieldResolver {
     return this.member_query_resolver.member({ member_uid }, ctx);
   }
 
-  @FieldResolver(() => Nft_con_edition, { nullable: true })
+  @FieldResolver(() => Nft_con_edition)
   async nft_con_edition(
-    @Root() { nft_con_edition_uuid }: My_nft_con,
+    @Root() { nft_con_edition_uuid, nft_con_edition }: My_nft_con,
     @Ctx() ctx: IContext
-  ): Promise<Nft_con_edition | null> {
-    if (!nft_con_edition_uuid) return null;
-
-    return this.nft_con_edition_query_resolver.nft_con_edition(
-      { uuid: nft_con_edition_uuid },
-      ctx
+  ): Promise<Nft_con_edition> {
+    return (
+      nft_con_edition ??
+      this.nft_con_edition_query_resolver.nft_con_edition(
+        { uuid: nft_con_edition_uuid },
+        ctx
+      )
     );
   }
 
@@ -97,5 +98,63 @@ export class MyNftConFieldResolver {
       console.log("err", err);
       return null;
     }
+  }
+
+  @FieldResolver(() => Int, { description: "실제 구매 가격" })
+  async purchase_price(
+    @Root() { uuid, member_uid }: My_nft_con,
+    @Ctx() { prismaClient }: IContext
+  ): Promise<number> {
+    const tradeTx = await prismaClient.trade_tx.findFirst({
+      orderBy: {
+        created_at: "desc",
+      },
+      where: {
+        is_active: true,
+        mynft_uuid: uuid,
+        member_uid,
+      },
+      select: {
+        created_at: true,
+        amount: true,
+      },
+    });
+
+    const marketTradeTx = await prismaClient.market_trade_tx.findFirst({
+      orderBy: {
+        created_at: "desc",
+      },
+      where: {
+        is_active: true,
+        my_nft_con_uuid: uuid,
+        buyer_uid: member_uid,
+      },
+      select: {
+        created_at: true,
+        admin_commission: true,
+      },
+    });
+
+    const convertMarketTradeTx = marketTradeTx && {
+      created_at: marketTradeTx.created_at,
+      amount: marketTradeTx.admin_commission * BigInt(10),
+    };
+
+    if (!tradeTx) {
+      return Number(convertMarketTradeTx?.amount);
+    }
+
+    if (!marketTradeTx) {
+      return Number(tradeTx.amount);
+    }
+
+    const sortByCreatedAt = [tradeTx, convertMarketTradeTx].sort((a, b) => {
+      const aCreatedAt = new Date(a!.created_at).valueOf();
+      const bCreatedAt = new Date(b!.created_at).valueOf();
+
+      return bCreatedAt - aCreatedAt;
+    });
+
+    return Number(sortByCreatedAt[0]?.amount);
   }
 }

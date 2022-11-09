@@ -9,7 +9,7 @@ import { Member } from "src/prisma";
 @Service()
 @Resolver(Member)
 export class MemberQueryResolver {
-  @Query(() => Member)
+  @Query(() => Member, { name: "member" })
   async member(
     @Arg("input") { member_uid }: MemberUidInput,
     @Ctx() { prismaClient }: IContext
@@ -19,7 +19,7 @@ export class MemberQueryResolver {
     });
   }
 
-  @Query(() => [Member], { defaultValue: [] })
+  @Query(() => [Member], { defaultValue: [], name: "members" })
   async members(
     @Arg("input") { skip, take }: PaginationInput,
     @Ctx() { prismaClient }: IContext

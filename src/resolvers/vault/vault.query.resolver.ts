@@ -7,7 +7,8 @@ import {
   types,
 } from "src/common/constant";
 import { IContext } from "src/common/interfaces/context";
-import { Nft_con_info } from "src/prisma";
+import { prismaClient } from "src/lib/prisma";
+import { Nft_con_edition, Nft_con_info } from "src/prisma";
 import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-edition/dto/field/nft-con-edition-status.dto";
 import { NftConEditionFieldResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.field.resolver";
 import {
@@ -253,7 +254,7 @@ export class VaultQueryResolver {
     return {
       lowest_price: Number(prices[0]),
       highest_price: Number(prices[prices.length - 1]),
-      img_url: nfts[0].img_url as string,
+      img_url: nfts[0].static_frontal_img_url as string,
       short_name,
       details,
     };
@@ -265,7 +266,7 @@ export class VaultQueryResolver {
     @Arg("input") { short_name }: VaultRawRelatedEditionsInput,
     @Ctx() ctx: IContext
   ): Promise<VaultRawRelatedEditionsOutput> {
-    const nfts = await ctx.prismaClient.nft_con_info.findMany({
+    const nfts = await prismaClient.nft_con_info.findMany({
       where: {
         short_name,
         is_active: true,
@@ -273,14 +274,16 @@ export class VaultQueryResolver {
       orderBy: {
         vintage: "asc",
       },
-      include: {
+      select: {
+        tier: true,
+        vintage: true,
+        capacity: true,
         nft_con_edition: {
-          include: {
-            my_nft_con: {
-              include: {
-                member: true,
-              },
-            },
+          select: {
+            edition_no: true,
+            uuid: true,
+            price: true,
+            status: true,
           },
         },
       },
@@ -298,19 +301,22 @@ export class VaultQueryResolver {
 
         const owner_nickname =
           await this.nft_con_edition_field_resolver.owner_nickname(
-            edition,
+            edition as Nft_con_edition,
             ctx
           );
         const owner_address =
-          await this.nft_con_edition_field_resolver.owner_address(edition, ctx);
+          await this.nft_con_edition_field_resolver.owner_address(
+            edition as Nft_con_edition,
+            ctx
+          );
         const status =
           await this.nft_con_edition_field_resolver.purchasable_status(
-            edition,
+            edition as Nft_con_edition,
             ctx
           );
         const price =
           await this.nft_con_edition_field_resolver.current_exposure_price(
-            edition,
+            edition as Nft_con_edition,
             ctx
           );
 
@@ -323,7 +329,7 @@ export class VaultQueryResolver {
           owner_address,
           status,
           status_kr: NftConEditionPurchasableStatusKr[status],
-          edition_no: !Number(edition_no) ? 0 : Number(edition_no),
+          edition_no: Number(edition_no),
           price,
         };
 

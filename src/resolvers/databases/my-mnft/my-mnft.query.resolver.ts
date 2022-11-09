@@ -17,6 +17,11 @@ export class MyMnftQueryResolver {
   ): Promise<My_mnft> {
     return prismaClient.my_mnft.findUniqueOrThrow({
       where: { uuid },
+      include: {
+        my_nft_con: true,
+        member: true,
+        participant: true,
+      },
     });
   }
 
@@ -30,6 +35,11 @@ export class MyMnftQueryResolver {
       where: { is_active: true, member_uid },
       orderBy: {
         created_at: "desc",
+      },
+      include: {
+        my_nft_con: true,
+        member: true,
+        participant: true,
       },
     });
   }

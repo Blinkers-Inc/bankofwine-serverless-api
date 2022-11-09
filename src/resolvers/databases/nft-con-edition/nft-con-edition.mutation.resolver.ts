@@ -1,4 +1,4 @@
-import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
 import { v4 as uuid } from "uuid";
 
@@ -20,14 +20,16 @@ import { TransactionMutationResolver } from "src/resolvers/transaction/transacti
 @Resolver(Nft_con_edition)
 export class NftConEditionMutationResolver {
   constructor(
-    private deposit_query_resolver: DepositQueryResolver,
     private member_query_resolver: MemberQueryResolver,
     private nft_con_edition_query_resolver: NftConEditionQueryResolver,
 
     private transaction_mutation_resolver: TransactionMutationResolver,
-    private metadata_mutation_resolver: MetadataMutationResolver
+    private metadata_mutation_resolver: MetadataMutationResolver,
+
+    private deposit_query_resolver: DepositQueryResolver
   ) {}
 
+  @Authorized()
   @Mutation(() => Nft_con_edition)
   async purchase_available_edition(
     @Arg("input")
@@ -36,11 +38,15 @@ export class NftConEditionMutationResolver {
   ): Promise<Nft_con_edition> {
     const { connected_wallet_address, nft_con_edition_uuid } = input;
 
-    const { uid: buyerUid, prismaClient, caver } = ctx;
+    const { Authorization: buyerUid, prismaClient, caver } = ctx;
 
     if (!buyerUid) {
-      throw new CustomError("miss uid", CustomErrorCode.MISS_UID, input);
-    } // header 에 uid가 없는 경우
+      throw new CustomError(
+        "unauthorized",
+        CustomErrorCode.UNAUTHORIZED,
+        input
+      );
+    } // header 에 Authorization가 없는 경우
 
     const nftConEdition =
       await this.nft_con_edition_query_resolver.nft_con_edition(
@@ -72,7 +78,8 @@ export class NftConEditionMutationResolver {
       { member_uid: buyerUid },
       ctx
     );
-    const buyerDeposit = await this.deposit_query_resolver.deposit(
+
+    const buyerDeposit = await this.deposit_query_resolver.member_deposit(
       {
         member_uid: buyerUid,
       },
@@ -234,6 +241,7 @@ export class NftConEditionMutationResolver {
         deposit_req_amnt: nftConEdition.price,
         deposit_tx_ty: "DEPOSIT",
         tx_approve_at: now,
+        tx_request_at: now,
         tx_status: "USE_DEPOSIT_COMPLETE",
         deposit_uuid: buyerDeposit.uuid,
         member_uid: buyerUid,

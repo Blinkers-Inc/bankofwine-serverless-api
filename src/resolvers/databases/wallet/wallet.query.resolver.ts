@@ -18,6 +18,21 @@ export class WalletQueryResolver {
     });
   }
 
+  @Query(() => [String])
+  async used_wallet_addresses(
+    @Arg("input") { member_uid }: MemberUidInput,
+    @Ctx() { prismaClient }: IContext
+  ): Promise<string[]> {
+    const usedWallets = await prismaClient.wallet.findMany({
+      take: 10000,
+      where: { member_uid },
+      select: {
+        address: true,
+      },
+    });
+    return [...new Set(usedWallets.map((wallet) => wallet.address))];
+  }
+
   @Query(() => Wallet, { nullable: true })
   async latest_wallet(
     @Arg("input") { member_uid }: MemberUidInput,
@@ -27,13 +42,5 @@ export class WalletQueryResolver {
       where: { member_uid },
       orderBy: { updated_at: "desc" },
     });
-  }
-
-  @Query(() => [Wallet], { defaultValue: [] })
-  async wallets(
-    @Arg("input") { member_uid }: MemberUidInput,
-    @Ctx() { prismaClient }: IContext
-  ): Promise<Wallet[]> {
-    return prismaClient.wallet.findMany({ where: { member_uid } });
   }
 }

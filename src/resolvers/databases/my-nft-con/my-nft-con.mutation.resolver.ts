@@ -1,4 +1,11 @@
-import { Arg, Ctx, Directive, Mutation, Resolver } from "type-graphql";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  Directive,
+  Mutation,
+  Resolver,
+} from "type-graphql";
 import { Service } from "typedi";
 import { v4 as uuid } from "uuid";
 
@@ -37,6 +44,7 @@ export class MyNftConMutationResolver {
     private nft_con_edition_field_resolver: NftConEditionFieldResolver
   ) {}
 
+  @Authorized()
   @Mutation(() => My_nft_con)
   @Directive("@cacheControl(maxAge:0)")
   async create_list(
@@ -52,11 +60,15 @@ export class MyNftConMutationResolver {
       total,
     } = input;
 
-    const { uid, prismaClient } = ctx;
+    const { Authorization: memberUid, prismaClient } = ctx;
 
-    if (!uid) {
-      throw new CustomError("miss uid", CustomErrorCode.MISS_UID, input);
-    } // header 에 uid가 없는 경우
+    if (!memberUid) {
+      throw new CustomError(
+        "unauthorized",
+        CustomErrorCode.UNAUTHORIZED,
+        input
+      );
+    } // header 에 Authorizationㅇ 없는 경우
 
     const isApprovedForAll =
       await this.migration_query_resolver.is_approved_for_all(
@@ -108,7 +120,7 @@ export class MyNftConMutationResolver {
     const { uid: myNftConOwnerUid } =
       await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
 
-    if (uid !== myNftConOwnerUid) {
+    if (memberUid !== myNftConOwnerUid) {
       throw new CustomError(
         "mismatch current owner",
         CustomErrorCode.MISMATCH_CURRENT_OWNER,
@@ -123,6 +135,26 @@ export class MyNftConMutationResolver {
         input
       );
     } // 컨트랙트 address가 유효하지 않은 경우 (마이그레이션 필요)
+
+    const tokenOwnerAddress =
+      await this.my_nft_con_query_resolver.token_owner_address(
+        {
+          token_id: myNftCon.token_id,
+          contract_address: myNftCon.contract_address,
+        },
+        ctx
+      );
+
+    if (
+      !tokenOwnerAddress ||
+      tokenOwnerAddress.toLowerCase() !== connected_wallet_address.toLowerCase()
+    ) {
+      throw new CustomError(
+        "not token owner",
+        CustomErrorCode.NOT_TOKEN_OWNER,
+        input
+      );
+    } // db에 입력한 connected_wallet_address 와 실제 tokenOwnerAddress 와 일치하는지 확인
 
     const marketTradeLogs = await prismaClient.market_trade_log.findMany({
       take: 1,
@@ -220,7 +252,8 @@ export class MyNftConMutationResolver {
         commission,
         total,
         my_nft_con_uuid: myNftCon.uuid,
-        from: uid,
+        from: memberUid,
+        token_owner_address: tokenOwnerAddress,
       },
     });
 
@@ -246,6 +279,7 @@ export class MyNftConMutationResolver {
     });
   }
 
+  @Authorized()
   @Mutation(() => My_nft_con)
   @Directive("@cacheControl(maxAge:0)")
   async cancel_list(
@@ -255,11 +289,15 @@ export class MyNftConMutationResolver {
   ): Promise<My_nft_con> {
     const { my_nft_con_uuid, connected_wallet_address } = input;
 
-    const { uid, prismaClient } = ctx;
+    const { Authorization: memberUid, prismaClient } = ctx;
 
-    if (!uid) {
-      throw new CustomError("miss uid", CustomErrorCode.MISS_UID, input);
-    } // header 에 uid가 없는 경우
+    if (!memberUid) {
+      throw new CustomError(
+        "unauthorized",
+        CustomErrorCode.UNAUTHORIZED,
+        input
+      );
+    } // header 에 Authorizationㅇ 없는 경우
 
     const isApprovedForAll =
       await this.migration_query_resolver.is_approved_for_all(
@@ -319,7 +357,7 @@ export class MyNftConMutationResolver {
     const { uid: myNftConOwnerUid } =
       await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
 
-    if (uid !== myNftConOwnerUid) {
+    if (memberUid !== myNftConOwnerUid) {
       throw new CustomError(
         "mismatch current owner",
         CustomErrorCode.MISMATCH_CURRENT_OWNER,
@@ -397,7 +435,7 @@ export class MyNftConMutationResolver {
         commission,
         total,
         my_nft_con_uuid: myNftCon.uuid,
-        from: uid,
+        from: memberUid,
       },
     });
 
@@ -423,6 +461,7 @@ export class MyNftConMutationResolver {
     });
   }
 
+  @Authorized()
   @Mutation(() => My_nft_con)
   @Directive("@cacheControl(maxAge:0)")
   async purchase_list(
@@ -432,11 +471,15 @@ export class MyNftConMutationResolver {
   ): Promise<My_nft_con> {
     const { connected_wallet_address, my_nft_con_uuid } = input;
 
-    const { uid: buyerUid, prismaClient, caver } = ctx;
+    const { Authorization: buyerUid, prismaClient, caver } = ctx;
 
     if (!buyerUid) {
-      throw new CustomError("miss uid", CustomErrorCode.MISS_UID, input);
-    } // header 에 uid가 없는 경우
+      throw new CustomError(
+        "unauthorized",
+        CustomErrorCode.UNAUTHORIZED,
+        input
+      );
+    } // header 에 Authorization가 없는 경우
 
     const myNftCon = await prismaClient.my_nft_con.findUniqueOrThrow({
       where: {
@@ -506,7 +549,35 @@ export class MyNftConMutationResolver {
         CustomErrorCode.INVALID_LISTING_STATUS,
         input
       );
-    } // is_listing 상태가 false인 경우
+    } // is_listing 상태가 false 이거나 최근 market_trade_log 상태가 LIST가 아닌 경우
+
+    const currentTokenOwnerAddress =
+      await this.my_nft_con_query_resolver.token_owner_address(
+        {
+          token_id: myNftCon.token_id,
+          contract_address: myNftCon.contract_address,
+        },
+        ctx
+      );
+
+    if (!currentTokenOwnerAddress) {
+      throw new CustomError(
+        "can't find owner address",
+        CustomErrorCode.CANNOT_FIND_OWNER_ADDRESS,
+        input
+      );
+    } // token owner 가 없는 경우
+
+    if (
+      marketTradeLogs[0].token_owner_address?.toLowerCase() !==
+      currentTokenOwnerAddress.toLowerCase()
+    ) {
+      throw new CustomError(
+        "seller is not token owner",
+        CustomErrorCode.NOT_TOKEN_OWNER,
+        input
+      );
+    } // 리스팅 당시의 오너와 현재 오너가 다른 경우
 
     const { uid: sellerUid } =
       await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
@@ -533,27 +604,10 @@ export class MyNftConMutationResolver {
       );
     } // PURCHASABLE 상태가 아닌 경우
 
-    const tokenOwnerAddress =
-      await this.my_nft_con_query_resolver.token_owner_address(
-        {
-          token_id: myNftCon.token_id,
-          contract_address: myNftCon.contract_address,
-        },
-        ctx
-      );
-
-    if (!tokenOwnerAddress) {
-      throw new CustomError(
-        "can't find owner address",
-        CustomErrorCode.CANNOT_FIND_OWNER_ADDRESS,
-        input
-      );
-    } // token owner 가 없는 경우
-
     const isSellerApprovedForAll =
       await this.migration_query_resolver.is_approved_for_all(
         {
-          owner: tokenOwnerAddress,
+          owner: currentTokenOwnerAddress,
           operator: process.env.CONTRACT_OWNER_ADDRESS,
           nft_contract: myNftCon.contract_address,
         },
@@ -568,7 +622,7 @@ export class MyNftConMutationResolver {
       );
     } // seller 가 트랜잭션 승인을 하지 않은 경우
 
-    const buyerDeposit = await this.deposit_query_resolver.deposit(
+    const buyerDeposit = await this.deposit_query_resolver.member_deposit(
       {
         member_uid: buyerUid,
       },
@@ -608,7 +662,7 @@ export class MyNftConMutationResolver {
           },
         ],
       },
-      [tokenOwnerAddress, connected_wallet_address, myNftCon.token_id]
+      [currentTokenOwnerAddress, connected_wallet_address, myNftCon.token_id]
     );
 
     const tx = {
@@ -680,7 +734,7 @@ export class MyNftConMutationResolver {
       );
     }
 
-    const sellerDeposit = await this.deposit_query_resolver.deposit(
+    const sellerDeposit = await this.deposit_query_resolver.member_deposit(
       {
         member_uid: sellerUid,
       },
@@ -723,6 +777,7 @@ export class MyNftConMutationResolver {
         deposit_req_amnt: buyerSpend,
         deposit_tx_ty: "DEPOSIT",
         tx_approve_at: now,
+        tx_request_at: now,
         tx_status: "USE_DEPOSIT_COMPLETE",
         deposit_uuid: buyerDeposit.uuid,
         member_uid: buyerUid,
@@ -779,7 +834,7 @@ export class MyNftConMutationResolver {
         seller_earn: sellerEarn,
         admin_commission: adminCommission,
         seller_uid: sellerUid,
-        seller_wallet_address: tokenOwnerAddress,
+        seller_wallet_address: currentTokenOwnerAddress,
         status: MarketTradeStatus.PURCHASE,
         transaction_hash: transactionHash,
         my_nft_con_uuid: myNftCon.uuid,

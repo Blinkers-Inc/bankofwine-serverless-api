@@ -9,8 +9,8 @@ import { Deposit } from "src/prisma";
 @Service()
 @Resolver(Deposit)
 export class DepositQueryResolver {
-  @Query(() => Deposit)
-  async deposit(
+  @Query(() => Deposit, { name: "member_deposit" })
+  async member_deposit(
     @Arg("input") input: MemberUidInput,
     @Ctx() { prismaClient }: IContext
   ): Promise<Deposit> {

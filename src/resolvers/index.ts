@@ -1,7 +1,6 @@
 import { buildSchemaSync } from "type-graphql";
 import { Container } from "typedi";
 
-import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
 import { MarketTradeLogFieldResolver } from "src/resolvers/databases/market-trade-log/market-trade-log.field.resolver";
@@ -30,24 +29,22 @@ import { TransactionMutationResolver } from "src/resolvers/transaction/transacti
 import { VaultRelatedEditionFieldResolver } from "src/resolvers/vault/vault.field.resolver";
 import { VaultQueryResolver } from "src/resolvers/vault/vault.query.resolver";
 
-export const authChecker = ({ context }: { context: IContext }) => {
-  const { Authorization } = context;
+export const authChecker = async ({ context }: { context: IContext }) => {
+  const { Authorization: memberUid } = context;
 
-  if (!Authorization.length) {
-    throw new CustomError(
-      "not exist authorization code",
-      CustomErrorCode.NOT_EXIST_AUTHORIZATION_CODE
-    );
+  if (!memberUid) {
+    return false;
   }
 
-  if (Authorization === "firebase") {
-    return true;
-  }
-
-  throw new CustomError("Access denied", CustomErrorCode.ACCESS_DENIED, {
-    Authorization,
+  const member = await context.prismaClient.member.findUnique({
+    where: { uid: memberUid },
   });
-  // return false; // or false if access is denied
+
+  if (!member) {
+    return false;
+  }
+
+  return true;
 };
 
 export const schema = buildSchemaSync({
