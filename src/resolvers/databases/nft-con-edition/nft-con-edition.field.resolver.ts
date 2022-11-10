@@ -3,6 +3,7 @@ import { Service } from "typedi";
 
 import { BOW_NICKNAME } from "src/common/constant";
 import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import {
   Market_trade_log,
   MarketTradeStatus,
@@ -30,19 +31,16 @@ export class NftConEditionFieldResolver {
 
   @FieldResolver(() => Nft_con_info)
   async nft_con_info(
-    @Root() { nft_con_uuid, nft_con_info }: Nft_con_edition,
-    @Ctx() ctx: IContext
+    @Root() { nft_con_uuid }: Nft_con_edition
   ): Promise<Nft_con_info> {
-    return (
-      nft_con_info ??
-      this.nft_con_info_query_resolver.nft_con_info({ uuid: nft_con_uuid }, ctx)
-    );
+    return this.nft_con_info_query_resolver.nft_con_info({
+      uuid: nft_con_uuid,
+    });
   }
 
   @FieldResolver(() => My_nft_con, { nullable: true })
   async my_nft_con(
-    @Root() { uuid }: Nft_con_edition,
-    @Ctx() { prismaClient }: IContext
+    @Root() { uuid }: Nft_con_edition
   ): Promise<My_nft_con | null> {
     const myNftCon = await prismaClient.my_nft_con.findFirst({
       where: {
@@ -70,15 +68,12 @@ export class NftConEditionFieldResolver {
 
     if (status === "AVAILABLE") return BOW_NICKNAME;
 
-    const my_nft_con = await this.my_nft_con(root, ctx);
+    const my_nft_con = await this.my_nft_con(root);
 
     if (my_nft_con) {
       const { member_uid, token_id, contract_address } = my_nft_con;
 
-      const member = await this.member_query_resolver.member(
-        { member_uid },
-        ctx
-      );
+      const member = await this.member_query_resolver.member({ member_uid });
 
       const { nick_nm } = member;
 
@@ -99,10 +94,9 @@ export class NftConEditionFieldResolver {
       )
         return tokenOwnerAddress; // 토큰 주인의 주소가 블랙홀 주소가 아니면 주인 주소 리턴
 
-      const latest_wallet = await this.wallet_query_resolver.latest_wallet(
-        { member_uid },
-        ctx
-      );
+      const latest_wallet = await this.wallet_query_resolver.latest_wallet({
+        member_uid,
+      });
 
       if (latest_wallet) return latest_wallet.address; // 최근 연결된 월렛 주소 리턴
     }
@@ -116,7 +110,7 @@ export class NftConEditionFieldResolver {
     @Ctx() ctx: IContext
   ): Promise<string> {
     const { status } = root;
-    const my_nft_con = await this.my_nft_con(root, ctx);
+    const my_nft_con = await this.my_nft_con(root);
 
     if (status === "AVAILABLE" || !my_nft_con) {
       return process.env.BLACK_HOLE_ADDRESS!; // 상태가 구매가능하거나 my_nft_con이 없는 경우 블랙홀로 보냄
@@ -142,11 +136,10 @@ export class NftConEditionFieldResolver {
     description: "에디션의 구매 가능 상태",
   })
   async purchasable_status(
-    @Root() root: Nft_con_edition,
-    @Ctx() ctx: IContext
+    @Root() root: Nft_con_edition
   ): Promise<NftConEditionPurchasableStatus> {
     const { status } = root;
-    const myNftCon = await this.my_nft_con(root, ctx);
+    const myNftCon = await this.my_nft_con(root);
 
     if (status === "AVAILABLE") {
       return NftConEditionPurchasableStatus.PURCHASABLE;
@@ -176,8 +169,7 @@ export class NftConEditionFieldResolver {
     description: "에디션의 가장 최근 리스팅 정보 (BOW 소유인 경우 포함)",
   })
   async latest_listing_info(
-    @Root() root: Nft_con_edition,
-    @Ctx() ctx: IContext
+    @Root() root: Nft_con_edition
   ): Promise<LatestListingInfoOutput> {
     const { status, price, minting_at } = root;
     if (status === "AVAILABLE") {
@@ -191,11 +183,11 @@ export class NftConEditionFieldResolver {
       };
     }
 
-    const myNftCon = await this.my_nft_con(root, ctx);
+    const myNftCon = await this.my_nft_con(root);
 
     if (myNftCon && myNftCon.is_listing) {
       const { status, sub_total, commission, total, created_at } =
-        await ctx.prismaClient.market_trade_log.findFirstOrThrow({
+        await prismaClient.market_trade_log.findFirstOrThrow({
           where: {
             is_active: true,
             my_nft_con_uuid: myNftCon.uuid,
@@ -232,7 +224,7 @@ export class NftConEditionFieldResolver {
     @Root() root: Nft_con_edition,
     @Ctx() ctx: IContext
   ): Promise<Market_trade_log[]> {
-    const currentMyNftCon = await this.my_nft_con(root, ctx);
+    const currentMyNftCon = await this.my_nft_con(root);
 
     if (!currentMyNftCon) {
       return [];
@@ -249,7 +241,7 @@ export class NftConEditionFieldResolver {
       is_burnt,
     } = currentMyNftCon;
 
-    const marketTradeLogs = await ctx.prismaClient.market_trade_log.findMany({
+    const marketTradeLogs = await prismaClient.market_trade_log.findMany({
       where: {
         is_active: true,
         my_nft_con_uuid,
@@ -259,13 +251,13 @@ export class NftConEditionFieldResolver {
       },
     });
 
-    const { price } = await ctx.prismaClient.nft_con_edition.findUniqueOrThrow({
+    const { price } = await prismaClient.nft_con_edition.findUniqueOrThrow({
       where: {
         uuid: nft_con_edition_uuid,
       },
     });
 
-    const mintMyNftCon = await ctx.prismaClient.my_nft_con.findFirstOrThrow({
+    const mintMyNftCon = await prismaClient.my_nft_con.findFirstOrThrow({
       where: {
         nft_con_edition_uuid,
       },
@@ -332,7 +324,7 @@ export class NftConEditionFieldResolver {
       return Number(price);
     } // 민팅 이후 판매 없는 경우
 
-    const myNftCon = await this.my_nft_con(root, ctx);
+    const myNftCon = await this.my_nft_con(root);
 
     if (!myNftCon) {
       return Number(price);

@@ -3,6 +3,7 @@ import { Service } from "typedi";
 
 import { ERC721_ABI } from "src/abi/ERC721";
 import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { Member, My_mnft, My_nft_con, Nft_con_edition } from "src/prisma";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
 import { MyMnftOfMyNftConInput } from "src/resolvers/databases/my-nft-con/dto/field/my-mnft.dto";
@@ -20,40 +21,34 @@ export class MyNftConFieldResolver {
     description: "최초 민팅한 유저, 가장 오래된 my_nft_con 을 통해 검증",
   })
   async minting_member(
-    @Root() { nft_con_edition_uuid }: My_nft_con,
-    @Ctx() ctx: IContext
+    @Root() { nft_con_edition_uuid }: My_nft_con
   ): Promise<Member> {
-    const { member_uid } = await ctx.prismaClient.my_nft_con.findFirstOrThrow({
+    const { member_uid } = await prismaClient.my_nft_con.findFirstOrThrow({
       where: {
         nft_con_edition_uuid,
       },
       orderBy: { created_at: "asc" },
     });
 
-    return this.member_query_resolver.member({ member_uid }, ctx);
+    return this.member_query_resolver.member({ member_uid });
   }
 
   @FieldResolver(() => Member, {
     description: "현재 소유주",
   })
-  async current_owner(
-    @Root() { member_uid }: My_nft_con,
-    @Ctx() ctx: IContext
-  ): Promise<Member> {
-    return this.member_query_resolver.member({ member_uid }, ctx);
+  async current_owner(@Root() { member_uid }: My_nft_con): Promise<Member> {
+    return this.member_query_resolver.member({ member_uid });
   }
 
   @FieldResolver(() => Nft_con_edition)
   async nft_con_edition(
-    @Root() { nft_con_edition_uuid, nft_con_edition }: My_nft_con,
-    @Ctx() ctx: IContext
+    @Root() { nft_con_edition_uuid, nft_con_edition }: My_nft_con
   ): Promise<Nft_con_edition> {
     return (
       nft_con_edition ??
-      this.nft_con_edition_query_resolver.nft_con_edition(
-        { uuid: nft_con_edition_uuid },
-        ctx
-      )
+      this.nft_con_edition_query_resolver.nft_con_edition({
+        uuid: nft_con_edition_uuid,
+      })
     );
   }
 
@@ -62,8 +57,7 @@ export class MyNftConFieldResolver {
     @Root()
     { member_uid, uuid }: My_nft_con,
     @Arg("input")
-    { member_uid: memberUidInput }: MyMnftOfMyNftConInput,
-    @Ctx() { prismaClient }: IContext
+    { member_uid: memberUidInput }: MyMnftOfMyNftConInput
   ): Promise<My_mnft[]> {
     const memberUid = memberUidInput ?? member_uid;
 
@@ -102,8 +96,7 @@ export class MyNftConFieldResolver {
 
   @FieldResolver(() => Int, { description: "실제 구매 가격" })
   async purchase_price(
-    @Root() { uuid, member_uid }: My_nft_con,
-    @Ctx() { prismaClient }: IContext
+    @Root() { uuid, member_uid }: My_nft_con
   ): Promise<number> {
     const tradeTx = await prismaClient.trade_tx.findFirst({
       orderBy: {

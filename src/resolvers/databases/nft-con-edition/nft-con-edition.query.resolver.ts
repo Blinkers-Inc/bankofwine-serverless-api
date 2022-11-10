@@ -1,9 +1,9 @@
-import { Arg, Ctx, Directive, Query, Resolver } from "type-graphql";
+import { Arg, Directive, Query, Resolver } from "type-graphql";
 import { Service } from "typedi";
 
 import { UuidInput } from "src/common/dto/uuid.input";
-import { IContext } from "src/common/interfaces/context";
 import { getVaultDetailByAttributes } from "src/helpers/get-detail-by-attributes";
+import { prismaClient } from "src/lib/prisma";
 import { Nft_con_edition, Nft_con_metadata } from "src/prisma";
 import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-edition/dto/field/nft-con-edition-status.dto";
 import { NftConEditionsInput } from "src/resolvers/databases/nft-con-edition/dto/query/nft-con-editions.dto";
@@ -27,8 +27,7 @@ export class NftConEditionQueryResolver {
 
   @Query(() => Nft_con_edition)
   async nft_con_edition(
-    @Arg("input") { uuid }: UuidInput,
-    @Ctx() { prismaClient }: IContext
+    @Arg("input") { uuid }: UuidInput
   ): Promise<Nft_con_edition> {
     return prismaClient.nft_con_edition.findUniqueOrThrow({
       where: { uuid },
@@ -40,8 +39,7 @@ export class NftConEditionQueryResolver {
 
   @Query(() => [Nft_con_edition], { defaultValue: [] })
   async nft_con_editions(
-    @Arg("input") { skip, take, nft_con_uuid }: NftConEditionsInput,
-    @Ctx() { prismaClient }: IContext
+    @Arg("input") { skip, take, nft_con_uuid }: NftConEditionsInput
   ): Promise<Nft_con_edition[]> {
     return prismaClient.nft_con_edition.findMany({
       include: {
@@ -63,12 +61,11 @@ export class NftConEditionQueryResolver {
   @Directive("@cacheControl(maxAge:0)")
   async recent_minting_editions(
     @Arg("input")
-    { to_timestamp, take = 12 }: RecentMintingEditionsInput,
-    @Ctx() ctx: IContext
+    { to_timestamp, take = 12 }: RecentMintingEditionsInput
   ): Promise<RecentMintingEdition[]> {
     const editionsOrderByMintingAt =
       // minting_at, nft_con_uuid가 동일한 리스트를 묶음
-      await ctx.prismaClient.nft_con_edition.groupBy({
+      await prismaClient.nft_con_edition.groupBy({
         take, // maximum 12
         by: ["minting_at", "nft_con_uuid"],
         orderBy: {
@@ -100,7 +97,7 @@ export class NftConEditionQueryResolver {
     const mappedEditionsList = await Promise.all(
       editionsOrderByMintingAt.map((ele) => {
         const { minting_at, nft_con_uuid } = ele;
-        return ctx.prismaClient.nft_con_edition.findMany({
+        return prismaClient.nft_con_edition.findMany({
           where: {
             minting_at,
             nft_con_uuid,
@@ -135,7 +132,7 @@ export class NftConEditionQueryResolver {
     // 각 에디션별 필요한 데이터를 추출
     const nftConEditions = await Promise.all(
       availableEditionsList.map(({ uuid }) => {
-        return ctx.prismaClient.nft_con_edition.findUniqueOrThrow({
+        return prismaClient.nft_con_edition.findUniqueOrThrow({
           where: { uuid },
           include: {
             nft_con_info: {
@@ -187,12 +184,11 @@ export class NftConEditionQueryResolver {
   @Query(() => PurchasableEditionsOutput)
   @Directive("@cacheControl(maxAge:0)")
   async purchasable_editions(
-    @Arg("input") { skip = 0, take = 12 }: PurchasableEditionsInput,
-    @Ctx() ctx: IContext
+    @Arg("input") { skip = 0, take = 12 }: PurchasableEditionsInput
   ): Promise<PurchasableEditionsOutput> {
     const totalEditions =
       // is_active 상태의 모든 에디션 리스트 호출
-      await ctx.prismaClient.nft_con_edition.findMany({
+      await prismaClient.nft_con_edition.findMany({
         where: {
           is_active: true,
         },
@@ -201,12 +197,10 @@ export class NftConEditionQueryResolver {
         },
         include: {
           nft_con_info: {
-            include: {
-              metadata: {
-                include: {
-                  attributes: true,
-                },
-              },
+            select: {
+              uuid: true,
+              is_active: true,
+              short_name: true,
             },
           },
         },
@@ -214,7 +208,9 @@ export class NftConEditionQueryResolver {
 
     const statusByEditions = await Promise.all(
       totalEditions.map((edition) =>
-        this.nft_con_edition_field_resolver.purchasable_status(edition, ctx)
+        this.nft_con_edition_field_resolver.purchasable_status(
+          edition as Nft_con_edition
+        )
       )
     );
 
@@ -227,7 +223,9 @@ export class NftConEditionQueryResolver {
 
     const latestListingInfoList = await Promise.all(
       filtered.map((edition) =>
-        this.nft_con_edition_field_resolver.latest_listing_info(edition, ctx)
+        this.nft_con_edition_field_resolver.latest_listing_info(
+          edition as Nft_con_edition
+        )
       )
     );
 
@@ -258,7 +256,7 @@ export class NftConEditionQueryResolver {
 
     return {
       total_count: sorted.length,
-      editions: sliced,
+      editions: sliced as unknown as Nft_con_edition[],
     };
   }
 }

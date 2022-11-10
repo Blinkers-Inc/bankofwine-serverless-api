@@ -4,6 +4,7 @@ import { Service } from "typedi";
 import { eventKeccak256, functionKeccak256 } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { MyMnftQueryResolver } from "src/resolvers/databases/my-mnft/my-mnft.query.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
 import { MetadataMutationResolver } from "src/resolvers/metadata/metadata.mutation.resolver";
@@ -50,19 +51,13 @@ export class MigrationMutationResolver {
     let token_id;
 
     if (is_mnft) {
-      ({ token_id } = await this.my_mnft_query_resolver.my_mnft(
-        {
-          uuid: my_nft_uuid,
-        },
-        ctx
-      ));
+      ({ token_id } = await this.my_mnft_query_resolver.my_mnft({
+        uuid: my_nft_uuid,
+      }));
     } else {
-      ({ token_id } = await this.my_nft_con_query_resolver.my_nft_con(
-        {
-          uuid: my_nft_uuid,
-        },
-        ctx
-      ));
+      ({ token_id } = await this.my_nft_con_query_resolver.my_nft_con({
+        uuid: my_nft_uuid,
+      }));
     }
 
     const convertTokenId = ctx.caver.utils.toBN(token_id).toString();
@@ -132,16 +127,13 @@ export class MigrationMutationResolver {
     if (isMnft) {
       //= 6-1. M-NFT 일경우 M-NFT metadata uri 생성
       ({ token_uri } =
-        await this.metadata_mutation_resolver.create_my_mnft_metadata_uri(
-          {
-            my_mnft_uuid: my_nft_uuid,
-            token_id: newTokenId,
-          },
-          ctx
-        ));
+        await this.metadata_mutation_resolver.create_my_mnft_metadata_uri({
+          my_mnft_uuid: my_nft_uuid,
+          token_id: newTokenId,
+        }));
 
       //= 5-1. 성공한 경우 my_mnft DB 업데이트 (token_id, contract_address, updated_at)
-      await ctx.prismaClient.my_mnft.update({
+      await prismaClient.my_mnft.update({
         where: {
           uuid: my_nft_uuid,
         },
@@ -154,16 +146,13 @@ export class MigrationMutationResolver {
     } else {
       //= 6-2. NFT일경우 NFT metadata uri 생성
       ({ token_uri } =
-        await this.metadata_mutation_resolver.create_my_nft_con_metadata_uri(
-          {
-            my_nft_con_uuid: my_nft_uuid,
-            token_id: newTokenId,
-          },
-          ctx
-        ));
+        await this.metadata_mutation_resolver.create_my_nft_con_metadata_uri({
+          my_nft_con_uuid: my_nft_uuid,
+          token_id: newTokenId,
+        }));
 
       //= 5-2. 성공한 경우 my_nft_con DB 업데이트 (token_id, contract_address, updated_at)
-      await ctx.prismaClient.my_nft_con.update({
+      await prismaClient.my_nft_con.update({
         where: {
           uuid: my_nft_uuid,
         },

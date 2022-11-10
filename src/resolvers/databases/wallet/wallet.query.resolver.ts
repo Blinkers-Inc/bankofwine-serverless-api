@@ -1,18 +1,15 @@
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Query, Resolver } from "type-graphql";
 import { Service } from "typedi";
 
 import { MemberUidInput, UuidInput } from "src/common/dto/uuid.input";
-import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { Wallet } from "src/prisma";
 
 @Service()
 @Resolver(Wallet)
 export class WalletQueryResolver {
   @Query(() => Wallet)
-  async wallet(
-    @Arg("input") { uuid }: UuidInput,
-    @Ctx() { prismaClient }: IContext
-  ): Promise<Wallet> {
+  async wallet(@Arg("input") { uuid }: UuidInput): Promise<Wallet> {
     return prismaClient.wallet.findUniqueOrThrow({
       where: { uuid },
     });
@@ -20,8 +17,7 @@ export class WalletQueryResolver {
 
   @Query(() => [String])
   async used_wallet_addresses(
-    @Arg("input") { member_uid }: MemberUidInput,
-    @Ctx() { prismaClient }: IContext
+    @Arg("input") { member_uid }: MemberUidInput
   ): Promise<string[]> {
     const usedWallets = await prismaClient.wallet.findMany({
       take: 10000,
@@ -35,8 +31,7 @@ export class WalletQueryResolver {
 
   @Query(() => Wallet, { nullable: true })
   async latest_wallet(
-    @Arg("input") { member_uid }: MemberUidInput,
-    @Ctx() { prismaClient }: IContext
+    @Arg("input") { member_uid }: MemberUidInput
   ): Promise<Wallet | null> {
     return prismaClient.wallet.findFirst({
       where: { member_uid },

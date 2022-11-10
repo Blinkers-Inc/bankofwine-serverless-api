@@ -16,7 +16,6 @@ import { plugin as ApolloServerPluginTracing } from "apollo-tracing";
 import CaverExtKas from "caver-js-ext-kas";
 
 import { IContext } from "src/common/interfaces/context";
-import { prismaClient } from "src/lib/prisma";
 import { schema } from "src/resolvers";
 import { sendCustomError } from "src/common/slack";
 import { Context } from "aws-lambda";
@@ -61,7 +60,7 @@ const server = new ApolloServer({
       KAS_SECRET_ACCESS_KEY
     );
 
-    return { Authorization, caver, prismaClient };
+    return { Authorization, caver };
   },
   introspection: true,
   plugins,

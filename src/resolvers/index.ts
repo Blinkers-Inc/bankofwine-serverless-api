@@ -2,6 +2,7 @@ import { buildSchemaSync } from "type-graphql";
 import { Container } from "typedi";
 
 import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
 import { MarketTradeLogFieldResolver } from "src/resolvers/databases/market-trade-log/market-trade-log.field.resolver";
 import { MemberFieldResolver } from "src/resolvers/databases/member/member.field.resolver";
@@ -36,7 +37,7 @@ export const authChecker = async ({ context }: { context: IContext }) => {
     return false;
   }
 
-  const member = await context.prismaClient.member.findUnique({
+  const member = await prismaClient.member.findUnique({
     where: { uid: memberUid },
   });
 

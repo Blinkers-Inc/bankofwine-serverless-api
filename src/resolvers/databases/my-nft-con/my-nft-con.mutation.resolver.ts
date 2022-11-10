@@ -17,6 +17,7 @@ import {
 } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { AdminDepositStatus, MarketTradeStatus, My_nft_con } from "src/prisma";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
 import { CancelListInput } from "src/resolvers/databases/my-nft-con/dto/mutation/cancel-list.dto";
@@ -60,7 +61,7 @@ export class MyNftConMutationResolver {
       total,
     } = input;
 
-    const { Authorization: memberUid, prismaClient } = ctx;
+    const { Authorization: memberUid } = ctx;
 
     if (!memberUid) {
       throw new CustomError(
@@ -118,7 +119,7 @@ export class MyNftConMutationResolver {
     } // is_burnt 상태가 true인 경우
 
     const { uid: myNftConOwnerUid } =
-      await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
+      await this.my_nft_con_field_resolver.current_owner(myNftCon);
 
     if (memberUid !== myNftConOwnerUid) {
       throw new CustomError(
@@ -191,8 +192,7 @@ export class MyNftConMutationResolver {
 
     const purchasableStatus =
       await this.nft_con_edition_field_resolver.purchasable_status(
-        myNftCon.nft_con_edition,
-        ctx
+        myNftCon.nft_con_edition
       );
 
     if (purchasableStatus !== NftConEditionPurchasableStatus.SOLD) {
@@ -289,7 +289,7 @@ export class MyNftConMutationResolver {
   ): Promise<My_nft_con> {
     const { my_nft_con_uuid, connected_wallet_address } = input;
 
-    const { Authorization: memberUid, prismaClient } = ctx;
+    const { Authorization: memberUid } = ctx;
 
     if (!memberUid) {
       throw new CustomError(
@@ -355,7 +355,7 @@ export class MyNftConMutationResolver {
     } // 컨트랙트 address가 유효하지 않은 경우 (마이그레이션 필요)
 
     const { uid: myNftConOwnerUid } =
-      await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
+      await this.my_nft_con_field_resolver.current_owner(myNftCon);
 
     if (memberUid !== myNftConOwnerUid) {
       throw new CustomError(
@@ -400,8 +400,7 @@ export class MyNftConMutationResolver {
 
     const purchasableStatus =
       await this.nft_con_edition_field_resolver.purchasable_status(
-        myNftCon.nft_con_edition,
-        ctx
+        myNftCon.nft_con_edition
       );
 
     if (purchasableStatus !== NftConEditionPurchasableStatus.PURCHASABLE) {
@@ -471,7 +470,7 @@ export class MyNftConMutationResolver {
   ): Promise<My_nft_con> {
     const { connected_wallet_address, my_nft_con_uuid } = input;
 
-    const { Authorization: buyerUid, prismaClient, caver } = ctx;
+    const { Authorization: buyerUid, caver } = ctx;
 
     if (!buyerUid) {
       throw new CustomError(
@@ -580,7 +579,7 @@ export class MyNftConMutationResolver {
     } // 리스팅 당시의 오너와 현재 오너가 다른 경우
 
     const { uid: sellerUid } =
-      await this.my_nft_con_field_resolver.current_owner(myNftCon, ctx);
+      await this.my_nft_con_field_resolver.current_owner(myNftCon);
 
     if (buyerUid === sellerUid) {
       throw new CustomError(
@@ -592,8 +591,7 @@ export class MyNftConMutationResolver {
 
     const purchasableStatus =
       await this.nft_con_edition_field_resolver.purchasable_status(
-        myNftCon.nft_con_edition,
-        ctx
+        myNftCon.nft_con_edition
       );
 
     if (purchasableStatus !== NftConEditionPurchasableStatus.PURCHASABLE) {
@@ -622,12 +620,9 @@ export class MyNftConMutationResolver {
       );
     } // seller 가 트랜잭션 승인을 하지 않은 경우
 
-    const buyerDeposit = await this.deposit_query_resolver.member_deposit(
-      {
-        member_uid: buyerUid,
-      },
-      ctx
-    );
+    const buyerDeposit = await this.deposit_query_resolver.member_deposit({
+      member_uid: buyerUid,
+    });
 
     const { sub_total, commission, total } = marketTradeLogs[0];
 
@@ -734,12 +729,9 @@ export class MyNftConMutationResolver {
       );
     }
 
-    const sellerDeposit = await this.deposit_query_resolver.member_deposit(
-      {
-        member_uid: sellerUid,
-      },
-      ctx
-    );
+    const sellerDeposit = await this.deposit_query_resolver.member_deposit({
+      member_uid: sellerUid,
+    });
 
     const now = new Date();
 

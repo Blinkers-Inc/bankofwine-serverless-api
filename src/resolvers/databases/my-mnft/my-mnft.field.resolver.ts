@@ -3,6 +3,7 @@ import { Service } from "typedi";
 
 import { ERC721_ABI } from "src/abi/ERC721";
 import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { Member, My_mnft, My_nft_con, Participant } from "src/prisma";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
 import { MyNftConQueryResolver } from "src/resolvers/databases/my-nft-con/my-nft-con.query.resolver";
@@ -16,35 +17,20 @@ export class MyMnftFieldResolver {
   ) {}
 
   @FieldResolver(() => My_nft_con)
-  async my_nft_con(
-    @Root() { mynft_uuid, my_nft_con }: My_mnft,
-    @Ctx() ctx: IContext
-  ): Promise<My_nft_con> {
-    return (
-      my_nft_con ??
-      this.my_nft_con_query_resolver.my_nft_con({ uuid: mynft_uuid }, ctx)
-    );
+  async my_nft_con(@Root() { mynft_uuid }: My_mnft): Promise<My_nft_con> {
+    return this.my_nft_con_query_resolver.my_nft_con({ uuid: mynft_uuid });
   }
 
   @FieldResolver(() => Member)
-  async member(
-    @Root() { member_uid, member }: My_mnft,
-    @Ctx() ctx: IContext
-  ): Promise<Member> {
-    return member ?? this.member_query_resolver.member({ member_uid }, ctx);
+  async member(@Root() { member_uid }: My_mnft): Promise<Member> {
+    return this.member_query_resolver.member({ member_uid });
   }
 
   @FieldResolver(() => [Participant], { defaultValue: [] })
-  async participants(
-    @Root() { uuid, participant }: My_mnft,
-    @Ctx() { prismaClient }: IContext
-  ): Promise<Participant[]> {
-    return (
-      participant ??
-      prismaClient.participant.findMany({
-        where: { my_mnft_uuid: uuid },
-      })
-    );
+  async participants(@Root() { uuid }: My_mnft): Promise<Participant[]> {
+    return prismaClient.participant.findMany({
+      where: { my_mnft_uuid: uuid },
+    });
   }
 
   @FieldResolver(() => String, { nullable: true })

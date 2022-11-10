@@ -7,6 +7,7 @@ import { eventKeccak256 } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
 import { sendCustomError } from "src/common/slack";
+import { prismaClient } from "src/lib/prisma";
 import { Nft_con_edition } from "src/prisma";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
@@ -38,7 +39,7 @@ export class NftConEditionMutationResolver {
   ): Promise<Nft_con_edition> {
     const { connected_wallet_address, nft_con_edition_uuid } = input;
 
-    const { Authorization: buyerUid, prismaClient, caver } = ctx;
+    const { Authorization: buyerUid, caver } = ctx;
 
     if (!buyerUid) {
       throw new CustomError(
@@ -49,12 +50,9 @@ export class NftConEditionMutationResolver {
     } // header 에 Authorization가 없는 경우
 
     const nftConEdition =
-      await this.nft_con_edition_query_resolver.nft_con_edition(
-        {
-          uuid: nft_con_edition_uuid,
-        },
-        ctx
-      );
+      await this.nft_con_edition_query_resolver.nft_con_edition({
+        uuid: nft_con_edition_uuid,
+      });
 
     if (!nftConEdition.is_active || nftConEdition.status !== "AVAILABLE") {
       throw new CustomError(
@@ -74,17 +72,13 @@ export class NftConEditionMutationResolver {
       ); // 민팅 날짜 이전에 구매를 시도할 경우
     }
 
-    const buyer = await this.member_query_resolver.member(
-      { member_uid: buyerUid },
-      ctx
-    );
+    const buyer = await this.member_query_resolver.member({
+      member_uid: buyerUid,
+    });
 
-    const buyerDeposit = await this.deposit_query_resolver.member_deposit(
-      {
-        member_uid: buyerUid,
-      },
-      ctx
-    );
+    const buyerDeposit = await this.deposit_query_resolver.member_deposit({
+      member_uid: buyerUid,
+    });
 
     if (Number(buyerDeposit.avail_deposit_sum) < nftConEdition.price) {
       throw new CustomError(
@@ -189,14 +183,11 @@ export class NftConEditionMutationResolver {
       .toString(); // topics의 배열 마지막 값이 tokenId
 
     try {
-      await this.metadata_mutation_resolver.create_my_nft_con_metadata_uri(
-        {
-          my_nft_con_uuid: nft_con_edition_uuid, // 이전 배포에 필수값이므로 내부 로직 수정 (nft_con_edition_uuid 있을 경우 사용하지 않음)
-          token_id: tokenId,
-          nft_con_edition_uuid,
-        },
-        ctx
-      );
+      await this.metadata_mutation_resolver.create_my_nft_con_metadata_uri({
+        my_nft_con_uuid: nft_con_edition_uuid, // 이전 배포에 필수값이므로 내부 로직 수정 (nft_con_edition_uuid 있을 경우 사용하지 않음)
+        token_id: tokenId,
+        nft_con_edition_uuid,
+      });
     } catch (err) {
       console.log("Error :>> ", err);
 
@@ -324,9 +315,8 @@ export class NftConEditionMutationResolver {
       );
     }
 
-    return this.nft_con_edition_query_resolver.nft_con_edition(
-      { uuid: nftConEdition.uuid },
-      ctx
-    );
+    return this.nft_con_edition_query_resolver.nft_con_edition({
+      uuid: nftConEdition.uuid,
+    });
   }
 }

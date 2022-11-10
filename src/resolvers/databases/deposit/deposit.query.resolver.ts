@@ -1,19 +1,16 @@
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Query, Resolver } from "type-graphql";
 import { Service } from "typedi";
 import { v4 as uuid } from "uuid";
 
 import { MemberUidInput } from "src/common/dto/uuid.input";
-import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { Deposit } from "src/prisma";
 
 @Service()
 @Resolver(Deposit)
 export class DepositQueryResolver {
   @Query(() => Deposit, { name: "member_deposit" })
-  async member_deposit(
-    @Arg("input") input: MemberUidInput,
-    @Ctx() { prismaClient }: IContext
-  ): Promise<Deposit> {
+  async member_deposit(@Arg("input") input: MemberUidInput): Promise<Deposit> {
     const { member_uid } = input;
     const deposit = await prismaClient.deposit.findFirst({
       orderBy: {

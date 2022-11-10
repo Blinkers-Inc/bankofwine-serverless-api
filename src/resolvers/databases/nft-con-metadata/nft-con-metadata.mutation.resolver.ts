@@ -1,10 +1,10 @@
-import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Arg, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
 import { v4 as uuid } from "uuid";
 
 import { defaultValue } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
-import { IContext } from "src/common/interfaces/context";
+import { prismaClient } from "src/lib/prisma";
 import { Nft_con_metadata } from "src/prisma";
 import { NftConInfoQueryResolver } from "src/resolvers/databases/nft-con-info/nft-con-info.query.resolver";
 import { CreateNftConMetadataInput } from "src/resolvers/databases/nft-con-metadata/dto/create-nft-con-metadata.dto";
@@ -23,17 +23,13 @@ export class NftConMetadataMutationResolver {
       description,
       external_url,
       nft_con_uuid,
-    }: CreateNftConMetadataInput,
-    @Ctx() ctx: IContext
+    }: CreateNftConMetadataInput
   ): Promise<Nft_con_metadata> {
-    const nftConInfo = await this.nft_con_info_query_resolver.nft_con_info(
-      {
-        uuid: nft_con_uuid,
-      },
-      ctx
-    );
+    const nftConInfo = await this.nft_con_info_query_resolver.nft_con_info({
+      uuid: nft_con_uuid,
+    });
 
-    const nftConMetadata = await ctx.prismaClient.nft_con_metadata.findUnique({
+    const nftConMetadata = await prismaClient.nft_con_metadata.findUnique({
       where: {
         nft_con_uuid,
       },
@@ -48,7 +44,7 @@ export class NftConMetadataMutationResolver {
     const metadataId = uuid();
     const now = new Date();
 
-    const metadataCreateTx = ctx.prismaClient.nft_con_metadata.create({
+    const metadataCreateTx = prismaClient.nft_con_metadata.create({
       data: {
         name,
         created_at: now,
@@ -72,7 +68,7 @@ export class NftConMetadataMutationResolver {
     
      */
     const attributesCreateTx = attributes.map((ele: any) => {
-      return ctx.prismaClient.nft_con_metadata_attribute.create({
+      return prismaClient.nft_con_metadata_attribute.create({
         data: {
           ...ele,
           created_at: now,
@@ -84,12 +80,9 @@ export class NftConMetadataMutationResolver {
       });
     });
 
-    await ctx.prismaClient.$transaction([
-      metadataCreateTx,
-      ...attributesCreateTx,
-    ]);
+    await prismaClient.$transaction([metadataCreateTx, ...attributesCreateTx]);
 
-    const metadata = await ctx.prismaClient.nft_con_metadata.findUnique({
+    const metadata = await prismaClient.nft_con_metadata.findUnique({
       where: { nft_con_uuid },
     });
 

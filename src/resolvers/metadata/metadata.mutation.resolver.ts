@@ -1,10 +1,9 @@
 import { PutObjectRequest } from "aws-sdk/clients/s3";
-import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Arg, Mutation, Resolver } from "type-graphql";
 import { Service } from "typedi";
 
 import { s3 } from "src/common/aws";
 import { CustomError, CustomErrorCode } from "src/common/error";
-import { IContext } from "src/common/interfaces/context";
 import { IMetadataAttribute } from "src/common/interfaces/metadata-attribute";
 import { Nft_con_metadata_attribute } from "src/prisma";
 import { MyMnftFieldResolver } from "src/resolvers/databases/my-mnft/my-mnft.field.resolver";
@@ -42,8 +41,7 @@ export class MetadataMutationResolver {
       my_nft_con_uuid,
       token_id,
       nft_con_edition_uuid,
-    }: CreateMyNftConMetadataURIInput,
-    @Ctx() ctx: IContext
+    }: CreateMyNftConMetadataURIInput
   ): Promise<CreateMetadataURIOutput> {
     let nftConEditionUuid: string;
 
@@ -51,40 +49,29 @@ export class MetadataMutationResolver {
       nftConEditionUuid = nft_con_edition_uuid;
     } else {
       const { nft_con_edition_uuid: editionUuid } =
-        await this.my_nft_con_query_resolver.my_nft_con(
-          {
-            uuid: my_nft_con_uuid,
-          },
-          ctx
-        );
+        await this.my_nft_con_query_resolver.my_nft_con({
+          uuid: my_nft_con_uuid,
+        });
 
       nftConEditionUuid = editionUuid;
     }
 
     const { edition_no, nft_con_uuid } =
-      await this.nft_con_edition_query_resolver.nft_con_edition(
-        {
-          uuid: nftConEditionUuid,
-        },
-        ctx
-      );
+      await this.nft_con_edition_query_resolver.nft_con_edition({
+        uuid: nftConEditionUuid,
+      });
 
-    const { tier } = await this.nft_con_info_query_resolver.nft_con_info(
-      { uuid: nft_con_uuid },
-      ctx
-    );
+    const { tier } = await this.nft_con_info_query_resolver.nft_con_info({
+      uuid: nft_con_uuid,
+    });
 
     const nftConMetadata =
-      await this.nft_con_metadata_query_resolver.nft_con_metadata(
-        {
-          nft_con_uuid,
-        },
-        ctx
-      );
+      await this.nft_con_metadata_query_resolver.nft_con_metadata({
+        nft_con_uuid,
+      });
 
     const attributes = await this.nft_con_metadata_field_resolver.attributes(
-      nftConMetadata,
-      ctx
+      nftConMetadata
     );
 
     const {
@@ -157,15 +144,11 @@ export class MetadataMutationResolver {
   @Mutation(() => CreateMetadataURIOutput)
   async create_my_mnft_metadata_uri(
     @Arg("input")
-    { my_mnft_uuid, token_id }: CreateMyMnftMetadataURIInput,
-    @Ctx() ctx: IContext
+    { my_mnft_uuid, token_id }: CreateMyMnftMetadataURIInput
   ): Promise<CreateMetadataURIOutput> {
-    const myMnft = await this.my_mnft_query_resolver.my_mnft(
-      {
-        uuid: my_mnft_uuid,
-      },
-      ctx
-    );
+    const myMnft = await this.my_mnft_query_resolver.my_mnft({
+      uuid: my_mnft_uuid,
+    });
 
     const { mynft_uuid, tasted_at, type, image_url, gif_url } = myMnft;
 
@@ -174,37 +157,26 @@ export class MetadataMutationResolver {
     }
 
     const { nft_con_edition_uuid } =
-      await this.my_nft_con_query_resolver.my_nft_con(
-        {
-          uuid: mynft_uuid,
-        },
-        ctx
-      );
+      await this.my_nft_con_query_resolver.my_nft_con({
+        uuid: mynft_uuid,
+      });
 
     const { edition_no, nft_con_uuid } =
-      await this.nft_con_edition_query_resolver.nft_con_edition(
-        {
-          uuid: nft_con_edition_uuid,
-        },
-        ctx
-      );
+      await this.nft_con_edition_query_resolver.nft_con_edition({
+        uuid: nft_con_edition_uuid,
+      });
 
-    const { tier } = await this.nft_con_info_query_resolver.nft_con_info(
-      { uuid: nft_con_uuid },
-      ctx
-    );
+    const { tier } = await this.nft_con_info_query_resolver.nft_con_info({
+      uuid: nft_con_uuid,
+    });
 
     const nftConMetadata =
-      await this.nft_con_metadata_query_resolver.nft_con_metadata(
-        {
-          nft_con_uuid,
-        },
-        ctx
-      );
+      await this.nft_con_metadata_query_resolver.nft_con_metadata({
+        nft_con_uuid,
+      });
 
     const attributes = await this.nft_con_metadata_field_resolver.attributes(
-      nftConMetadata,
-      ctx
+      nftConMetadata
     );
 
     const {
@@ -260,10 +232,7 @@ export class MetadataMutationResolver {
       value: Math.floor(Date.parse(tasted_at.toString()) / 1000),
     };
 
-    const participants = await this.my_mnft_field_resolver.participants(
-      myMnft,
-      ctx
-    );
+    const participants = await this.my_mnft_field_resolver.participants(myMnft);
 
     const mnftEditionAttribute = {
       display_type: MetadataDisplayType.NUMBER,

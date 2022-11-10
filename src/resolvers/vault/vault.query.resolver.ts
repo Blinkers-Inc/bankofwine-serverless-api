@@ -48,10 +48,9 @@ export class VaultQueryResolver {
   ];
 
   @Query(() => VaultListOutput, { defaultValue: [] })
-  @Directive("@cacheControl(maxAge:100)")
+  @Directive("@cacheControl(maxAge:1000)")
   async vault_list(
-    @Arg("input") { sort, skip = 0, take = 24 }: VaultListInput,
-    @Ctx() { prismaClient }: IContext
+    @Arg("input") { sort, skip = 0, take = 24 }: VaultListInput
   ): Promise<VaultListOutput> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const args: any = {
@@ -118,10 +117,9 @@ export class VaultQueryResolver {
   }
 
   @Query(() => VaultDetailsOutput)
-  @Directive("@cacheControl(maxAge:100)")
+  @Directive("@cacheControl(maxAge:1000)")
   async vault_details(
-    @Arg("input") { short_name }: VaultDetailsInput,
-    @Ctx() { prismaClient }: IContext
+    @Arg("input") { short_name }: VaultDetailsInput
   ): Promise<VaultDetailsOutput> {
     const nfts = await prismaClient.nft_con_info.findMany({
       where: {
@@ -311,8 +309,7 @@ export class VaultQueryResolver {
           );
         const status =
           await this.nft_con_edition_field_resolver.purchasable_status(
-            edition as Nft_con_edition,
-            ctx
+            edition as Nft_con_edition
           );
         const price =
           await this.nft_con_edition_field_resolver.current_exposure_price(
