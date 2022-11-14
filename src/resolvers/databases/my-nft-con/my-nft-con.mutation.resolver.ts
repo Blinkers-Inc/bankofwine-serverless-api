@@ -17,6 +17,7 @@ import {
 } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
+import { sendSlackNotification } from "src/common/slack";
 import { prismaClient } from "src/lib/prisma";
 import { AdminDepositStatus, MarketTradeStatus, My_nft_con } from "src/prisma";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
@@ -94,7 +95,11 @@ export class MyNftConMutationResolver {
         uuid: my_nft_con_uuid,
       },
       include: {
-        nft_con_edition: true,
+        nft_con_edition: {
+          include: {
+            nft_con_info: true,
+          },
+        },
       },
     });
 
@@ -272,6 +277,19 @@ export class MyNftConMutationResolver {
       );
     }
 
+    await sendSlackNotification({
+      header: "신규 리스트가 생성되었습니다..",
+      address: connected_wallet_address,
+      memberUid: memberUid,
+      fullName: myNftCon.nft_con_edition.nft_con_info?.name ?? "알 수 없음",
+      tier: myNftCon.nft_con_edition.nft_con_info?.tier ?? "알 수 없음",
+      functionName: "create_list",
+      subTotal: sub_total.toString(),
+      commission: commission.toString(),
+      total: total.toString(),
+      nftConEditionUuid: myNftCon.nft_con_edition_uuid,
+    });
+
     return prismaClient.my_nft_con.findUniqueOrThrow({
       where: {
         uuid: my_nft_con_uuid,
@@ -322,7 +340,7 @@ export class MyNftConMutationResolver {
         uuid: my_nft_con_uuid,
       },
       include: {
-        nft_con_edition: true,
+        nft_con_edition: { include: { nft_con_info: true } },
       },
     });
 
@@ -453,6 +471,19 @@ export class MyNftConMutationResolver {
       );
     }
 
+    await sendSlackNotification({
+      header: "리스트가 취소되었습니다.",
+      address: connected_wallet_address,
+      memberUid: memberUid,
+      fullName: myNftCon.nft_con_edition.nft_con_info?.name ?? "hello",
+      tier: myNftCon.nft_con_edition.nft_con_info?.tier ?? "PUBLIC",
+      functionName: "cancel_list",
+      subTotal: sub_total.toString(),
+      commission: commission.toString(),
+      total: total.toString(),
+      nftConEditionUuid: myNftCon.nft_con_edition_uuid,
+    });
+
     return prismaClient.my_nft_con.findUniqueOrThrow({
       where: {
         uuid: my_nft_con_uuid,
@@ -485,7 +516,9 @@ export class MyNftConMutationResolver {
         uuid: my_nft_con_uuid,
       },
       include: {
-        nft_con_edition: true,
+        nft_con_edition: {
+          include: { nft_con_info: true },
+        },
       },
     });
 
@@ -911,6 +944,19 @@ export class MyNftConMutationResolver {
         { ...input, dynamoUuid }
       );
     }
+
+    await sendSlackNotification({
+      header: "리스트를 통한 구매가 발생했습니다.",
+      address: connected_wallet_address,
+      memberUid: buyerUid,
+      fullName: myNftCon.nft_con_edition.nft_con_info?.name ?? "알 수 없음",
+      tier: myNftCon.nft_con_edition.nft_con_info?.tier ?? "알 수 없음",
+      functionName: "purchase_list",
+      subTotal: sub_total.toString(),
+      commission: commission.toString(),
+      total: total.toString(),
+      nftConEditionUuid: myNftCon.nft_con_edition_uuid,
+    });
 
     return prismaClient.my_nft_con.findUniqueOrThrow({
       where: {

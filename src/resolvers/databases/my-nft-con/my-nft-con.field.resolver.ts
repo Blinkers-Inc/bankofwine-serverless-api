@@ -96,7 +96,7 @@ export class MyNftConFieldResolver {
 
   @FieldResolver(() => Int, { description: "실제 구매 가격" })
   async purchase_price(
-    @Root() { uuid, member_uid }: My_nft_con
+    @Root() { uuid, member_uid, nft_con_edition_uuid }: My_nft_con
   ): Promise<number> {
     const tradeTx = await prismaClient.trade_tx.findFirst({
       orderBy: {
@@ -130,8 +130,21 @@ export class MyNftConFieldResolver {
 
     const convertMarketTradeTx = marketTradeTx && {
       created_at: marketTradeTx.created_at,
-      amount: marketTradeTx.admin_commission * BigInt(10),
+      amount: marketTradeTx.admin_commission * BigInt(10), // commission * 10 구매가
     };
+
+    const trades = [tradeTx, convertMarketTradeTx];
+
+    const isBothNull = trades.findIndex((trade) => trade !== null) === -1;
+
+    if (isBothNull) {
+      const { price } =
+        await this.nft_con_edition_query_resolver.nft_con_edition({
+          uuid: nft_con_edition_uuid,
+        });
+
+      return Number(price);
+    } // 거래소 제작 이전에 생성된 my_nft_con의 경우 edition price로 리턴
 
     if (!tradeTx) {
       return Number(convertMarketTradeTx?.amount);
@@ -141,12 +154,12 @@ export class MyNftConFieldResolver {
       return Number(tradeTx.amount);
     }
 
-    const sortByCreatedAt = [tradeTx, convertMarketTradeTx].sort((a, b) => {
+    const sortByCreatedAt = trades.sort((a, b) => {
       const aCreatedAt = new Date(a!.created_at).valueOf();
       const bCreatedAt = new Date(b!.created_at).valueOf();
 
       return bCreatedAt - aCreatedAt;
-    });
+    }); // 둘 다 있을 경우 가장 최신의 금액을 가져옴
 
     return Number(sortByCreatedAt[0]?.amount);
   }

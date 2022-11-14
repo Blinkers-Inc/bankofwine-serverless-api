@@ -6,7 +6,7 @@ import { dynamoClient } from "src/common/aws";
 import { eventKeccak256 } from "src/common/constant";
 import { CustomError, CustomErrorCode } from "src/common/error";
 import { IContext } from "src/common/interfaces/context";
-import { sendCustomError } from "src/common/slack";
+import { sendCustomError, sendSlackNotification } from "src/common/slack";
 import { prismaClient } from "src/lib/prisma";
 import { Nft_con_edition } from "src/prisma";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
@@ -314,6 +314,19 @@ export class NftConEditionMutationResolver {
         { ...input, dynamoUuid }
       );
     }
+
+    await sendSlackNotification({
+      header: "신규 에디션 구매가 발생했습니다.",
+      address: connected_wallet_address,
+      memberUid: buyerUid,
+      fullName: nftConEdition.nft_con_info?.name ?? "알 수 없음",
+      tier: nftConEdition.nft_con_info?.tier ?? "알 수 없음",
+      functionName: "purchase_available_edition",
+      subTotal: nftConEdition.price.toString(),
+      commission: "0",
+      total: nftConEdition.price.toString(),
+      nftConEditionUuid: nftConEdition.uuid,
+    });
 
     return this.nft_con_edition_query_resolver.nft_con_edition({
       uuid: nftConEdition.uuid,

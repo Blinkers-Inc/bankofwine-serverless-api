@@ -23,7 +23,7 @@ provider:
   stage: ${opt:stage, "dev"}
   environment:
     STAGE: ${self:provider.stage}
-  memorySize: 2048
+  memorySize: 1024
   timeout: 29
   tracing:
     lambda: true
@@ -51,7 +51,7 @@ plugins:
 custom:
   provisionedConcurrency:
     dev: 1
-    prod: 3
+    prod: 1
   webpack:
     excludeRegex: \.ts|test|\.map
     includeModules:
