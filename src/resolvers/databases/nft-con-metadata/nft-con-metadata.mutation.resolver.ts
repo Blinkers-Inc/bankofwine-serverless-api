@@ -14,7 +14,9 @@ import { CreateNftConMetadataInput } from "src/resolvers/databases/nft-con-metad
 export class NftConMetadataMutationResolver {
   constructor(private nft_con_info_query_resolver: NftConInfoQueryResolver) {}
 
-  @Mutation(() => Nft_con_metadata)
+  @Mutation(() => Nft_con_metadata, {
+    description: "nft_con_info의 메타데이터 생성 (어드민)",
+  })
   async create_nft_con_metadata(
     @Arg("input")
     {

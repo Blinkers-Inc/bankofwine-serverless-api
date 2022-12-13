@@ -7,4 +7,11 @@ export abstract class IContext {
 
   @Field({ defaultValue: "", name: "Authorization" })
   Authorization: string;
+
+  @Field({
+    defaultValue: "false",
+    name: "isAdmin",
+    description: "어드민 여부",
+  })
+  isAdmin: string;
 }

@@ -408,38 +408,39 @@ model nft_con_edition {
 }
 
 model nft_con_info {
-  uuid                    String            @id @db.Uuid
-  created_at              DateTime          @db.Timestamp(6)
-  is_active               Boolean
-  is_delete               Boolean
-  updated_at              DateTime          @db.Timestamp(6)
-  creator                 String            @db.VarChar(255)
-  updater                 String            @db.VarChar(255)
-  name                    String            @db.VarChar(255)
-  short_name              String            @db.VarChar(255)
-  tier                    String            @db.VarChar(255)
-  type_en                 String            @db.VarChar(255)
-  type_ko                 String            @db.VarChar(255)
-  vintage                 String            @db.VarChar(255)
-  abv                     String?           @db.VarChar(255)
-  capacity                String?           @db.VarChar(255)
-  description_en          String?
-  description_ko          String?
-  grape_variety_en        String?           @db.VarChar(255)
-  grape_variety_ko        String?           @db.VarChar(255)
-  img_url                 String?           @db.VarChar(255)
-  nft_id                  String?           @db.VarChar(255)
-  region_en               String?           @db.VarChar(255)
-  region_ko               String?           @db.VarChar(255)
-  sort                    BigInt?
-  winery                  String?           @db.VarChar(255)
-  is_buyable              Boolean?
-  gif_bg_color            String?           @db.VarChar(255)
-  gif_url                 String?           @db.VarChar(255)
-  static_frontal_img_url  String?           @db.VarChar(255)
-  static_diagonal_img_url String?           @db.VarChar(255)
-  nft_con_edition         nft_con_edition[]
-  metadata                nft_con_metadata?
+  uuid                      String            @id @db.Uuid
+  created_at                DateTime          @db.Timestamp(6)
+  is_active                 Boolean
+  is_delete                 Boolean
+  updated_at                DateTime          @db.Timestamp(6)
+  creator                   String            @db.VarChar(255)
+  updater                   String            @db.VarChar(255)
+  name                      String            @db.VarChar(255)
+  short_name                String            @db.VarChar(255)
+  tier                      String            @db.VarChar(255)
+  type_en                   String            @db.VarChar(255)
+  type_ko                   String            @db.VarChar(255)
+  vintage                   String            @db.VarChar(255)
+  abv                       String?           @db.VarChar(255)
+  capacity                  String?           @db.VarChar(255)
+  description_en            String?
+  description_ko            String?
+  grape_variety_en          String?           @db.VarChar(255)
+  grape_variety_ko          String?           @db.VarChar(255)
+  img_url                   String?           @db.VarChar(255)
+  nft_id                    String?           @db.VarChar(255)
+  region_en                 String?           @db.VarChar(255)
+  region_ko                 String?           @db.VarChar(255)
+  sort                      BigInt?
+  winery                    String?           @db.VarChar(255)
+  is_buyable                Boolean?
+  gif_bg_color              String?           @db.VarChar(255)
+  gif_url                   String?           @db.VarChar(255)
+  static_frontal_img_url    String?           @db.VarChar(255)
+  static_diagonal_img_url   String?           @db.VarChar(255)
+  rate_of_price_fluctuation String?           @db.VarChar(255)
+  nft_con_edition           nft_con_edition[]
+  metadata                  nft_con_metadata?
 }
 
 model nft_con_metadata_attribute {

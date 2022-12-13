@@ -48,7 +48,7 @@ if (!process.env.IS_OFFLINE) {
 const server = new ApolloServer({
   context: async ({
     event: {
-      headers: { Authorization },
+      headers: { Authorization, isAdmin },
     },
     context,
   }): Promise<IContext> => {
@@ -60,7 +60,7 @@ const server = new ApolloServer({
       KAS_SECRET_ACCESS_KEY
     );
 
-    return { Authorization, caver };
+    return { Authorization, caver, isAdmin };
   },
   introspection: true,
   plugins,
@@ -89,6 +89,12 @@ const server = new ApolloServer({
 exports.handler = (event: any, context: Context, callback: any) => {
   // Set to false to send the response right away when the callback executes, instead of waiting for the Node.js event loop to be empty.
   context.callbackWaitsForEmptyEventLoop = false;
+
+  /** Immediate response for WarmUp plugin */
+  if (event.source === "serverless-plugin-warmup") {
+    console.log("WarmUp - Lambda is warm!");
+    return callback(null, "Lambda is warm!");
+  }
 
   return server.createHandler({
     expressGetMiddlewareOptions: {

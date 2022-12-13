@@ -5,7 +5,10 @@ export const COMMISSION_PERCENTAGE = 0.05;
 
 export const functionKeccak256 = {
   migrate: "0xbbf3df0c",
+  transferFrom: "0x23b872dd",
+  safeTransferFrom: "0x42842e0e",
 };
+
 export const eventKeccak256 = {
   Migrate: "0xcfb106b7b5693a3789fe5e4fb3e0bf3be0ad69200678333d6b490d7369a2e113",
   ApprovalForAll:

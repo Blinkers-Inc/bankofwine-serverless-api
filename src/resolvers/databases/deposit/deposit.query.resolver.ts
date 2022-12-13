@@ -2,13 +2,22 @@ import { Arg, Query, Resolver } from "type-graphql";
 import { Service } from "typedi";
 import { v4 as uuid } from "uuid";
 
-import { MemberUidInput } from "src/common/dto/uuid.input";
+import { DepositInput, MemberUidInput } from "src/common/dto/uuid.input";
 import { prismaClient } from "src/lib/prisma";
 import { Deposit } from "src/prisma";
 
 @Service()
 @Resolver(Deposit)
 export class DepositQueryResolver {
+  @Query(() => Deposit, { name: "deposit", description: "어드민, 미사용" })
+  async deposit(@Arg("input") input: DepositInput): Promise<Deposit> {
+    return prismaClient.deposit.findUniqueOrThrow({
+      where: {
+        uuid: input.deposit_uuid,
+      },
+    });
+  }
+
   @Query(() => Deposit, { name: "member_deposit" })
   async member_deposit(@Arg("input") input: MemberUidInput): Promise<Deposit> {
     const { member_uid } = input;

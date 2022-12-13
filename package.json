@@ -7,10 +7,10 @@
     "db:pull:dev": "dotenv -e .env.dev -- npx prisma db pull",
     "db:push:dev": "dotenv -e .env.dev -- npx prisma db push",
     "db:push:prod": "dotenv -e .env.prod -- npx prisma db push",
-    "dev": "rm -rf .serverless & SLS_DEBUG=* npx sls offline --stage dev",
-    "prod": "rm -rf .serverless & SLS_DEBUG=* npx sls offline --stage prod",
-    "deploy:dev": "rm -rf .serverless & SLS_DEBUG=* npx sls deploy --stage dev",
-    "deploy:prod": "rm -rf .serverless & SLS_DEBUG=* npx sls deploy --stage prod",
+    "dev": "rm -rf .serverless & SLS_DEBUG=* sls offline --stage dev",
+    "prod": "rm -rf .serverless & SLS_DEBUG=* sls offline --stage prod",
+    "deploy:dev": "rm -rf .serverless & SLS_DEBUG=* sls deploy --stage dev --verbose",
+    "deploy:prod": "rm -rf .serverless & SLS_DEBUG=* sls deploy --stage prod --verbose",
     "remove:dev": "SLS_DEBUG=* npx sls remove --stage dev",
     "remove:prod": "SLS_DEBUG=* npx sls remove --stage prod",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -29,6 +29,7 @@
   "description": "",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.104",
+    "@types/graphql-fields": "^1.3.4",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
     "aws-sdk": "^2.1229.0",
@@ -46,6 +47,7 @@
     "serverless": "^3.22.0",
     "serverless-dotenv-plugin": "^4.0.2",
     "serverless-offline": "^10.0.0",
+    "serverless-plugin-warmup": "^8.2.1",
     "serverless-webpack": "^5.9.1",
     "serverless-webpack-prisma": "^1.1.1",
     "ts-loader": "^9.4.1",
@@ -55,10 +57,10 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.219.0",
     "@firebase/auth": "^0.20.7",
     "@prisma/client": "^4.3.1",
     "@slack/webhook": "^6.1.0",
-    "@types/graphql-fields": "^1.3.4",
     "apollo-server-errors": "^3.3.1",
     "apollo-server-lambda": "^3.10.2",
     "apollo-server-plugin-base": "^3.6.2",

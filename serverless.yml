@@ -23,8 +23,9 @@ provider:
   stage: ${opt:stage, "dev"}
   environment:
     STAGE: ${self:provider.stage}
-  memorySize: 1024
+  memorySize: 512
   timeout: 29
+  logRetentionInDays: 14
   tracing:
     lambda: true
   deploymentBucket:
@@ -46,33 +47,28 @@ plugins:
   - serverless-dotenv-plugin
   - serverless-webpack
   - serverless-webpack-prisma
+  - serverless-plugin-warmup
   - serverless-offline
 
 custom:
-  provisionedConcurrency:
-    dev: 1
-    prod: 1
+  warmup:
+    default:
+      enabled: true
+      prewarm: true # Run WarmUp immediately after a deploy lambda
+      events:
+        - schedule: rate(5 minutes)
+      logRetentionInDays: 14
   webpack:
     excludeRegex: \.ts|test|\.map
     includeModules:
       forceExclude:
         - aws-sdk
-    packager: npm # Packager that will be used to package your external modules
-    packagerOptions:
-      scripts:
-        - prisma generate
-        - npx rimraf "node_modules/@types"
-        - npx rimraf "node_modules/aws-sdk"
+        - "@aws-sdk/client-lambda"
 
 package:
   individually: true
   patterns:
     - "./src/prisma/*"
-    - "node_modules/.prisma/client/*"
-    - "!node_modules/.prisma/client/libquery_engine-*"
-    - "node_modules/.prisma/client/libquery_engine-rhel-*"
-    - "!node_modules/prisma/libquery_engine-*"
-    - "!node_modules/@prisma/engines/**"
 
 functions:
   graphql:
@@ -83,4 +79,3 @@ functions:
           cors: true
           path: /graphql
           method: any
-    provisionedConcurrency: ${self:custom.provisionedConcurrency.${opt:stage, self:provider.stage}}

@@ -6,6 +6,18 @@ export class UuidInput {
   uuid!: string;
 }
 
+@InputType("DepositInput")
+export class DepositInput {
+  @Field()
+  deposit_uuid!: string;
+}
+
+@InputType("DepositTxInput")
+export class DepositTxInput {
+  @Field()
+  deposit_tx_uuid!: string;
+}
+
 @InputType("MemberUidInput")
 export class MemberUidInput {
   @Field()

@@ -11,7 +11,9 @@ import { NftConEditionPurchasableStatus } from "src/resolvers/databases/nft-con-
 import { VaultDetailsInput } from "src/resolvers/vault/dto/vault-details.dto";
 
 export enum Tier {
+  COLLECTIBLE = "COLLECTIBLE",
   EVENT = "EVENT",
+  INVESTMENT = "INVESTMENT",
   OG = "OG",
   PUBLIC = "PUBLIC",
   SPCL = "SPCL",

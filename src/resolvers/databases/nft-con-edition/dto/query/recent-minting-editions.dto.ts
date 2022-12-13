@@ -32,6 +32,9 @@ export class RecentMintingEdition extends VaultDetail {
   static_diagonal_img_url: string;
 
   @Field()
+  rate_of_price_fluctuation: string;
+
+  @Field()
   short_name: string;
 
   @Field(() => Tier)

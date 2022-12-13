@@ -70,7 +70,7 @@ export class MyNftConMutationResolver {
         CustomErrorCode.UNAUTHORIZED,
         input
       );
-    } // header 에 Authorizationㅇ 없는 경우
+    } // header 에 Authorization이 없는 경우
 
     const isApprovedForAll =
       await this.migration_query_resolver.is_approved_for_all(

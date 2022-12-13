@@ -40,8 +40,15 @@ export class VaultQueryResolver {
     private nft_con_edition_field_resolver: NftConEditionFieldResolver
   ) {}
 
-  tierSortList = [Tier.OG, Tier.SPCL, Tier.PUBLIC, Tier.EVENT];
-  statusSortList = [
+  private tierSortList = [
+    Tier.COLLECTIBLE,
+    Tier.OG,
+    Tier.INVESTMENT,
+    Tier.SPCL,
+    Tier.PUBLIC,
+    Tier.EVENT,
+  ];
+  private statusSortList = [
     NftConEditionPurchasableStatus.PURCHASABLE,
     NftConEditionPurchasableStatus.SOLD,
     NftConEditionPurchasableStatus.REDEEMED,

@@ -57,7 +57,9 @@ export class NftConEditionQueryResolver {
     });
   }
 
-  @Query(() => [RecentMintingEdition])
+  @Query(() => [RecentMintingEdition], {
+    description: "마켓플레이스 내 '최근 민팅 NFT'",
+  })
   @Directive("@cacheControl(maxAge:0)")
   async recent_minting_editions(
     @Arg("input")
@@ -169,6 +171,8 @@ export class NftConEditionQueryResolver {
         purchasable_editions: purchasableEditions[index],
         img_url: nft_con_info.img_url!,
         static_diagonal_img_url: nft_con_info.static_diagonal_img_url!,
+        rate_of_price_fluctuation:
+          nft_con_info.rate_of_price_fluctuation ?? "0",
         tier: nft_con_info.tier as Tier,
         short_name: nft_con_info.short_name,
         ...vaultDetail,
