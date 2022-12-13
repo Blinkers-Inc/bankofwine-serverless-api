@@ -38,7 +38,6 @@ import { VaultRelatedEditionFieldResolver } from "src/resolvers/vault/vault.fiel
 import { VaultQueryResolver } from "src/resolvers/vault/vault.query.resolver";
 
 export const customAuthChecker = async ({ context }: { context: IContext }) => {
-  console.log("context", context);
   const { Authorization: authKey, isAdmin } = context;
 
   if (authKey === process.env.ADMIN_KEY) {
