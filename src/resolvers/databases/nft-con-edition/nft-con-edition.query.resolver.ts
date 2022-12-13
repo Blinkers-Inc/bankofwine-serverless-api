@@ -194,7 +194,16 @@ export class NftConEditionQueryResolver {
       // is_active 상태의 모든 에디션 리스트 호출
       await prismaClient.nft_con_edition.findMany({
         where: {
-          is_active: true,
+          AND: [
+            {
+              is_active: true,
+            },
+            {
+              minting_at: {
+                lte: new Date(),
+              }, // 현재시점에 구매 가능한 에디션만 필터
+            },
+          ],
         },
         orderBy: {
           minting_at: "desc",
