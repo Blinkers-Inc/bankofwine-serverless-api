@@ -13,8 +13,9 @@ export class NftConInfoMutationResolver {
   @Authorized()
   @Mutation(() => Nft_con_info, {
     description: "nft_con_info 생성 (admin only)",
+    name: "create_nft_con_info",
   })
-  async create_nft_con_info(
+  async createNftConInfo(
     @Arg("input") input: CreateNftConInfoInput
   ): Promise<Nft_con_info> {
     return await this.nftConInfoMutationService.createNftConInfo(input);
