@@ -11,10 +11,8 @@ import { prismaClient } from "src/lib/prisma";
 import { Nft_con_edition } from "src/prisma";
 import { DepositQueryResolver } from "src/resolvers/databases/deposit/deposit.query.resolver";
 import { MemberQueryResolver } from "src/resolvers/databases/member/member.query.resolver";
-import { CreateNftConEditionsInput } from "src/resolvers/databases/nft-con-edition/dto/mutation/create-nft-con-editions.dto";
 import PurchaseAvailableEditionInput from "src/resolvers/databases/nft-con-edition/dto/mutation/purchase-available-edition.dto";
 import { NftConEditionQueryResolver } from "src/resolvers/databases/nft-con-edition/nft-con-edition.query.resolver";
-import { NftConEditionMutationService } from "src/resolvers/databases/nft-con-edition/services/nft-con-edition.mutation.service";
 import { MetadataMutationResolver } from "src/resolvers/metadata/metadata.mutation.resolver";
 import { TransactionStatus } from "src/resolvers/transaction/dto/send-raw-transaction.dto";
 import { TransactionMutationResolver } from "src/resolvers/transaction/transaction.mutation.resolver";
@@ -29,22 +27,8 @@ export class NftConEditionMutationResolver {
     private transaction_mutation_resolver: TransactionMutationResolver,
     private metadata_mutation_resolver: MetadataMutationResolver,
 
-    private deposit_query_resolver: DepositQueryResolver,
-
-    private nftConEditionMutationService: NftConEditionMutationService
+    private deposit_query_resolver: DepositQueryResolver
   ) {}
-
-  @Authorized()
-  @Mutation(() => Int, {
-    name: "create_nft_con_editions",
-    description:
-      "신규 에디션 리스트 생성, 성공시 배치 완료한 수량 리턴(only admin)",
-  })
-  async createNftConEditions(
-    @Arg("input") input: CreateNftConEditionsInput
-  ): Promise<number> {
-    return this.nftConEditionMutationService.createNftConEditions(input);
-  }
 
   @Authorized()
   @Mutation(() => Nft_con_edition)

@@ -201,7 +201,7 @@ export class NftConEditionQueryResolver {
             {
               minting_at: {
                 lte: new Date(),
-              }, // 현재시점에 구매 가능한 에디션만 필터
+              }, // 현재시점에 구매 가능한 에디션만 필터 (미래 민팅일 에디션은 제외)
             },
           ],
         },
@@ -214,6 +214,7 @@ export class NftConEditionQueryResolver {
               uuid: true,
               is_active: true,
               short_name: true,
+              vintage: true,
             },
           },
         },
@@ -247,22 +248,35 @@ export class NftConEditionQueryResolver {
     }); // latestListingInfoList 추가 (정렬 위함)
 
     const sorted = mapped.sort((a, b) => {
-      // 민팅시점 > 숏네임 > edition_no 순으로 정렬
       const aListingAt = new Date(a.latestListingInfo.listing_at).valueOf();
       const bListingAt = new Date(b.latestListingInfo.listing_at).valueOf();
 
       if (aListingAt !== bListingAt) {
         return bListingAt - aListingAt;
-      }
+      } // 가장 최근 리스팅된 순서로 정렬 (유저판매, 민팅 모두 포함)
 
       const aShortName = a.nft_con_info.short_name;
       const bShortName = b.nft_con_info.short_name;
 
       if (aShortName !== bShortName) {
         return aShortName.localeCompare(bShortName);
-      }
+      } // 리스팅순 동일한 경우 알파벳순으로 정렬
 
-      return Number(a.edition_no) - Number(b.edition_no);
+      const aVintage = a.nft_con_info.vintage;
+      const bVintage = b.nft_con_info.vintage;
+
+      if (aVintage !== bVintage) {
+        return aVintage.localeCompare(bVintage);
+      } // 알파벳 동일한 경우 빈티지 순 정렬 (낮은 순)
+
+      const aEditionNo = Number(a.edition_no); // bigInt -> number
+      const bEditionNo = Number(b.edition_no); // bigInt -> number
+
+      if (aEditionNo !== bEditionNo) {
+        return aEditionNo - bEditionNo;
+      } // 빈티지 동일한 경우 에디션 넘버 순 정렬 (낮은 순)
+
+      return 0; // 모두 동일한 경우 0
     });
 
     const sliced = sorted.slice(skip, skip + take);
